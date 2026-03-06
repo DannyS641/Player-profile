@@ -469,7 +469,7 @@ export default function SettingsPage() {
               <img
                 src={profile.photo_url}
                 alt="Profile"
-                className="h-full w-full object-cover"
+                className="h-full w-full object-cover object-center"
               />
             ) : (
               getInitials(profile.full_name)

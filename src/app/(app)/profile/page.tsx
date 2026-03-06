@@ -180,7 +180,7 @@ export default function ProfilePage() {
                 <img
                   src={profile.photo_url}
                   alt="Profile"
-                  className="h-full w-full object-cover object-top"
+                  className="h-full w-full object-cover object-center"
                 />
               ) : (
                 <span className="text-lg font-semibold text-muted">

@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function SiteHeader() {
   return (
-    <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 rounded-3xl border border-line bg-[#f6f1e8] px-6 py-5 shadow-[0_12px_28px_-24px_rgba(11,27,43,0.55)]">
+    <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 rounded-3xl border border-line bg-[#f6f1e8] px-6 py-5 shadow-[0_12px_28px_-24px_rgba(11,27,43,0.55)] opacity-0 animate-slide-down">
       <Link href="/" className="font-display text-xl tracking-tight">
         ADRENALE 5
       </Link>
