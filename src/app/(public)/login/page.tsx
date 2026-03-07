@@ -97,6 +97,13 @@ export default function LoginPage() {
           Create an account
         </Link>
       </p>
+      <p className="mt-2 text-sm text-muted">
+        Can&apos;t remember password?{" "}
+        <Link className="font-semibold text-foreground" href="/forgot-password">
+          Reset password here
+        </Link>
+        .
+      </p>
     </div>
   );
 }
