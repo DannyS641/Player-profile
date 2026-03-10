@@ -1,46 +1,16 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-type ZoomWebhookPayload = {
-  event?: string;
-  payload?: {
-    plainToken?: string;
-    object?: {
-      id?: string | number;
-      participant?: {
-        email?: string;
-        join_time?: string;
-        leave_time?: string;
-        duration?: number;
-      };
-    };
-    participant?: {
-      email?: string;
-      join_time?: string;
-      leave_time?: string;
-      duration?: number;
-    };
-  };
-};
-
-const supabaseUrl = Deno.env.get("SUPABASE_URL");
-const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-const zoomSecret = Deno.env.get("ZOOM_WEBHOOK_SECRET");
-
-if (!supabaseUrl || !serviceKey) {
-  throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY.");
-}
-
-const supabase = createClient(supabaseUrl, serviceKey);
+const encoder = new TextEncoder();
 
 const toHex = (buffer: ArrayBuffer) =>
   Array.from(new Uint8Array(buffer))
-    .map((b) => b.toString(16).padStart(2, "0"))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
     .join("");
 
-const hmacSha256 = async (secret: string, message: string) => {
+const hmacSha256Hex = async (secret: string, message: string) => {
   const key = await crypto.subtle.importKey(
     "raw",
-    new TextEncoder().encode(secret),
+    encoder.encode(secret),
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign"],
@@ -48,115 +18,263 @@ const hmacSha256 = async (secret: string, message: string) => {
   const signature = await crypto.subtle.sign(
     "HMAC",
     key,
-    new TextEncoder().encode(message),
+    encoder.encode(message),
   );
   return toHex(signature);
 };
 
-const verifyZoomSignature = async (
-  secret: string,
-  timestamp: string | null,
-  body: string,
-  signature: string | null,
-) => {
-  if (!timestamp || !signature) return false;
-  const message = `v0:${timestamp}:${body}`;
-  const hash = await hmacSha256(secret, message);
-  return signature === `v0=${hash}`;
+const jsonResponse = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { "content-type": "application/json" },
+  });
+
+const supabaseUrl = Deno.env.get("SUPABASE_URL");
+const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+const debugEnabled = Deno.env.get("ZOOM_WEBHOOK_DEBUG") === "true";
+
+const supabase =
+  supabaseUrl && serviceKey ? createClient(supabaseUrl, serviceKey) : null;
+const log = (...args: unknown[]) => {
+  if (debugEnabled) {
+    console.log(...args);
+  }
 };
 
-Deno.serve(async (req: Request) => {
+const toDateKey = (value?: string) => {
+  const date = value ? new Date(value) : new Date();
+  if (Number.isNaN(date.getTime())) {
+    return new Date().toISOString().slice(0, 10);
+  }
+  return date.toISOString().slice(0, 10);
+};
+
+const toTimestamp = (value?: string) => {
+  const date = value ? new Date(value) : new Date();
+  if (Number.isNaN(date.getTime())) {
+    return new Date().toISOString();
+  }
+  return date.toISOString();
+};
+
+Deno.serve(async (req) => {
+  if (req.method !== "POST") {
+    return new Response("OK", { status: 200 });
+  }
+
+  const secret = Deno.env.get("ZOOM_WEBHOOK_SECRET");
+  if (!secret) {
+    return jsonResponse(
+      { error: "Missing ZOOM_WEBHOOK_SECRET env var." },
+      500,
+    );
+  }
+
   const rawBody = await req.text();
-  const signature = req.headers.get("x-zm-signature");
-  const timestamp = req.headers.get("x-zm-request-timestamp");
+  let body: {
+    event?: string;
+    payload?: { plainToken?: string };
+  };
 
-  if (zoomSecret) {
-    const valid = await verifyZoomSignature(zoomSecret, timestamp, rawBody, signature);
-    if (!valid) {
-      return new Response("Invalid signature", { status: 401 });
-    }
-  }
-
-  let payload: ZoomWebhookPayload;
   try {
-    payload = JSON.parse(rawBody);
+    body = JSON.parse(rawBody);
   } catch {
-    return new Response("Invalid payload", { status: 400 });
+    return jsonResponse({ error: "Invalid JSON body." }, 400);
   }
 
-  if (payload?.event === "endpoint.url_validation") {
-    const plainToken = payload?.payload?.plainToken;
-    if (!plainToken || !zoomSecret) {
-      return new Response("Missing token", { status: 400 });
+  if (body?.event === "endpoint.url_validation") {
+    const plainToken = body.payload?.plainToken;
+    if (!plainToken) {
+      return jsonResponse({ error: "Missing plainToken." }, 400);
     }
-    const encryptedToken = await hmacSha256(zoomSecret, plainToken);
-    return Response.json({ plainToken, encryptedToken });
+    log("Zoom validation request received.");
+    const encryptedToken = await hmacSha256Hex(secret, plainToken);
+    return jsonResponse({ plainToken, encryptedToken });
   }
 
+  const timestamp = req.headers.get("x-zm-request-timestamp") ?? "";
+  const signature = req.headers.get("x-zm-signature") ?? "";
+  if (!timestamp || !signature) {
+    log("Missing signature headers.");
+    return jsonResponse({ error: "Missing Zoom signature headers." }, 400);
+  }
+
+  const message = `v0:${timestamp}:${rawBody}`;
+  const expected = `v0=${await hmacSha256Hex(secret, message)}`;
+  if (signature !== expected) {
+    log("Invalid signature.");
+    return jsonResponse({ error: "Invalid signature." }, 401);
+  }
+
+  if (!supabase) {
+    return jsonResponse(
+      { error: "Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY." },
+      500,
+    );
+  }
+
+  const event = body?.event ?? "";
   if (
-    payload?.event !== "meeting.participant_joined" &&
-    payload?.event !== "meeting.participant_left"
+    event !== "meeting.participant_joined" &&
+    event !== "meeting.participant_left"
   ) {
-    return new Response("Ignored", { status: 200 });
+    log("Ignoring event:", event);
+    return jsonResponse({ received: true });
   }
 
-  const settings = await supabase
-    .from("app_settings")
-    .select("meeting_id, session_tz")
-    .eq("id", 1)
-    .single();
-
-  const meetingId = String(payload?.payload?.object?.id ?? "");
-  const allowedMeetingId = settings.data?.meeting_id ?? "";
-  if (allowedMeetingId && meetingId && allowedMeetingId !== meetingId) {
-    return new Response("Meeting not allowed", { status: 200 });
-  }
-
-  const participant =
-    payload?.payload?.participant ?? payload?.payload?.object?.participant ?? {};
-  const participantEmail = String(participant?.email ?? "").toLowerCase();
-  const joinTime = participant?.join_time ?? null;
-  const leaveTime = participant?.leave_time ?? null;
-  const durationMinutes = participant?.duration ?? null;
-  const sessionTz = settings.data?.session_tz ?? "Africa/Lagos";
-
-  const baseTime = joinTime || leaveTime || new Date().toISOString();
-  const sessionDate = new Date(baseTime).toLocaleDateString("en-CA", {
-    timeZone: sessionTz,
+  const payloadObject = body?.payload?.object ?? {};
+  const meetingId = String(payloadObject.id ?? payloadObject.uuid ?? "").trim();
+  const participant = payloadObject.participant ?? {};
+  const participantEmail =
+    participant.email?.toLowerCase().trim() ??
+    participant.user_email?.toLowerCase().trim() ??
+    null;
+  const participantKey =
+    participantEmail ||
+    participant.id ||
+    participant.user_id ||
+    participant.user_name ||
+    "unknown";
+  log("Zoom event:", event, {
+    meetingId,
+    participantKey,
+    participantEmail,
   });
+
+  const joinTime = toTimestamp(participant.join_time ?? payloadObject.start_time);
+  const leaveTime = toTimestamp(
+    participant.leave_time ?? payloadObject.start_time,
+  );
+  const sessionDate = toDateKey(
+    participant.join_time ?? participant.leave_time ?? payloadObject.start_time,
+  );
 
   let playerId: string | null = null;
   if (participantEmail) {
     const { data: profile } = await supabase
       .from("profiles")
       .select("id")
-      .ilike("email", participantEmail)
-      .single();
+      .eq("email", participantEmail)
+      .maybeSingle();
     playerId = profile?.id ?? null;
+  } else {
+    log("Participant email missing; using fallback key.");
   }
 
-  const record: Record<string, unknown> = {
-    meeting_id: meetingId || allowedMeetingId,
-    participant_email: participantEmail,
-    session_date: sessionDate,
-    updated_at: new Date().toISOString(),
-    raw_payload: payload,
-  };
-
-  if (playerId) {
-    record.player_id = playerId;
-  }
-  if (joinTime) record.joined_at = joinTime;
-  if (leaveTime) record.left_at = leaveTime;
-  if (durationMinutes !== null) record.duration_minutes = durationMinutes;
-
-  const { error } = await supabase
+  const { data: existing } = await supabase
     .from("attendance_events")
-    .upsert(record, { onConflict: "meeting_id,participant_email,session_date" });
+    .select("id, joined_at, left_at, duration_minutes, player_id")
+    .eq("meeting_id", meetingId)
+    .eq("participant_email", participantKey)
+    .eq("session_date", sessionDate)
+    .maybeSingle();
 
-  if (error) {
-    return new Response(error.message, { status: 500 });
+  const currentDurationMinutes = existing?.duration_minutes ?? 0;
+  const existingPlayerId = existing?.player_id ?? null;
+  const resolvedPlayerId = existingPlayerId ?? playerId;
+
+  if (event === "meeting.participant_joined") {
+    if (existing?.id) {
+      await supabase
+        .from("attendance_events")
+        .update({
+          joined_at: joinTime,
+          left_at: null,
+          raw_payload: body,
+          updated_at: new Date().toISOString(),
+          player_id: resolvedPlayerId,
+        })
+        .eq("id", existing.id);
+      log("Updated attendance_events (join).", existing.id);
+    } else {
+      await supabase.from("attendance_events").insert({
+        meeting_id: meetingId,
+        participant_email: participantKey,
+        session_date: sessionDate,
+        joined_at: joinTime,
+        left_at: null,
+        duration_minutes: 0,
+        raw_payload: body,
+        player_id: resolvedPlayerId,
+      });
+      log("Inserted attendance_events (join).");
+    }
+
+    return jsonResponse({ received: true });
   }
 
-  return new Response("OK", { status: 200 });
+  let newDurationMinutes = currentDurationMinutes;
+  if (existing?.joined_at) {
+    const joinedAt = new Date(existing.joined_at);
+    const leftAt = new Date(leaveTime);
+    if (!Number.isNaN(joinedAt.getTime()) && !Number.isNaN(leftAt.getTime())) {
+      const deltaSeconds = Math.max(
+        0,
+        (leftAt.getTime() - joinedAt.getTime()) / 1000,
+      );
+      const totalSeconds = currentDurationMinutes * 60 + deltaSeconds;
+      newDurationMinutes = Math.floor(totalSeconds / 60);
+    }
+  }
+  log("Computed duration minutes:", newDurationMinutes);
+
+  if (existing?.id) {
+    await supabase
+      .from("attendance_events")
+      .update({
+        left_at: leaveTime,
+        duration_minutes: newDurationMinutes,
+        raw_payload: body,
+        updated_at: new Date().toISOString(),
+        player_id: resolvedPlayerId,
+      })
+      .eq("id", existing.id);
+    log("Updated attendance_events (leave).", existing.id);
+  } else {
+    await supabase.from("attendance_events").insert({
+      meeting_id: meetingId,
+      participant_email: participantKey,
+      session_date: sessionDate,
+      joined_at: null,
+      left_at: leaveTime,
+      duration_minutes: newDurationMinutes,
+      raw_payload: body,
+      player_id: resolvedPlayerId,
+    });
+    log("Inserted attendance_events (leave).");
+  }
+
+  if (resolvedPlayerId) {
+    const { data: settings } = await supabase
+      .from("app_settings")
+      .select("min_minutes")
+      .eq("id", 1)
+      .maybeSingle();
+    const minMinutes = settings?.min_minutes ?? 10;
+
+    if (newDurationMinutes >= minMinutes) {
+      await supabase.from("attendance").upsert(
+        {
+          player_id: resolvedPlayerId,
+          session_date: sessionDate,
+          method: "zoom_webhook",
+        },
+        { onConflict: "player_id,session_date" },
+      );
+      log("Attendance marked present.", {
+        playerId: resolvedPlayerId,
+        sessionDate,
+        minutes: newDurationMinutes,
+      });
+    } else {
+      log("Attendance not yet met minimum.", {
+        playerId: resolvedPlayerId,
+        sessionDate,
+        minutes: newDurationMinutes,
+        minMinutes,
+      });
+    }
+  }
+
+  return jsonResponse({ received: true });
 });

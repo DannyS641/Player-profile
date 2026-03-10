@@ -42,6 +42,7 @@ export default function ProfilePage() {
   const [message, setMessage] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [zoomLink, setZoomLink] = useState<string | null>(null);
+  const [minMinutes, setMinMinutes] = useState(10);
 
   useEffect(() => {
     let isMounted = true;
@@ -85,12 +86,13 @@ export default function ProfilePage() {
 
       const { data: settings } = await supabase
         .from("app_settings")
-        .select("zoom_link")
+        .select("zoom_link, min_minutes")
         .eq("id", 1)
         .single();
 
       if (isMounted) {
         setZoomLink(settings?.zoom_link ?? null);
+        setMinMinutes(settings?.min_minutes ?? 10);
       }
 
       if (isMounted) {
@@ -116,7 +118,9 @@ export default function ProfilePage() {
       return;
     }
 
-    setMessage("Opening Zoom. Attendance will be verified automatically.");
+    setMessage(
+      `Opening Zoom. Attendance will be verified after ${minMinutes} minutes.`,
+    );
     window.open(zoomLink, "_blank", "noopener,noreferrer");
   };
 

@@ -137,12 +137,12 @@ export default function AttendancePage() {
   return (
     <div className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-display text-3xl">Attendance</h1>
-          <p className="text-sm text-muted">
-            Verified attendance based on Zoom (min {minMinutes} mins).
-          </p>
-        </div>
+      <div>
+        <h1 className="font-display text-3xl">Attendance</h1>
+        <p className="text-sm text-muted">
+          Verified attendance based on Zoom (min {minMinutes} mins).
+        </p>
+      </div>
         <Link
           href="/profile"
           className="rounded-full border border-line px-4 py-2 text-xs font-semibold transition hover:border-foreground"
