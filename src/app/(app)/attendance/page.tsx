@@ -16,6 +16,7 @@ export default function AttendancePage() {
   const [rows, setRows] = useState<AttendanceRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [minMinutes, setMinMinutes] = useState(10);
 
   useEffect(() => {
@@ -32,6 +33,7 @@ export default function AttendancePage() {
 
       if (isMounted) {
         setUserId(userData.user.id);
+        setUserEmail(userData.user.email ?? null);
       }
 
       const { data: settings } = await supabase
@@ -40,10 +42,17 @@ export default function AttendancePage() {
         .eq("id", 1)
         .single();
 
+      const eventFilter =
+        userData.user.email && userData.user.id
+          ? `player_id.eq.${userData.user.id},participant_email.ilike.${userData.user.email}`
+          : userData.user.id
+            ? `player_id.eq.${userData.user.id}`
+            : "";
+
       const { data: events } = await supabase
         .from("attendance_events")
         .select("session_date, duration_minutes, joined_at, left_at")
-        .eq("player_id", userData.user.id)
+        .or(eventFilter)
         .order("session_date", { ascending: false });
 
       const { data: overrides } = await supabase

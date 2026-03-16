@@ -129,11 +129,14 @@ Deno.serve(async (req) => {
     participant.email?.toLowerCase().trim() ??
     participant.user_email?.toLowerCase().trim() ??
     null;
+  const participantName = String(
+    participant.user_name ?? participant.name ?? "",
+  ).trim();
   const participantKey =
     participantEmail ||
     participant.id ||
     participant.user_id ||
-    participant.user_name ||
+    participantName ||
     "unknown";
   log("Zoom event:", event, {
     meetingId,
@@ -154,11 +157,20 @@ Deno.serve(async (req) => {
     const { data: profile } = await supabase
       .from("profiles")
       .select("id")
-      .eq("email", participantEmail)
+      .ilike("email", participantEmail)
       .maybeSingle();
     playerId = profile?.id ?? null;
-  } else {
-    log("Participant email missing; using fallback key.");
+  }
+  if (!playerId && participantName) {
+    const { data: profileByName } = await supabase
+      .from("profiles")
+      .select("id")
+      .ilike("full_name", participantName)
+      .maybeSingle();
+    playerId = profileByName?.id ?? null;
+  }
+  if (!playerId) {
+    log("Participant identity unresolved; using fallback key.");
   }
 
   const { data: existing } = await supabase
