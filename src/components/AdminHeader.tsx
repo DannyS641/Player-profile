@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 
 const navItems = [
@@ -18,6 +18,39 @@ const navItems = [
 
 export default function AdminHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState(navItems[0].href);
+
+  useEffect(() => {
+    const sections = navItems
+      .map((item) => document.querySelector(item.href))
+      .filter((section): section is HTMLElement => section instanceof HTMLElement);
+
+    if (sections.length === 0) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visibleEntries = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+
+        if (visibleEntries.length > 0) {
+          setActiveSection(`#${visibleEntries[0].target.id}`);
+        }
+      },
+      {
+        rootMargin: "-18% 0px -58% 0px",
+        threshold: [0.2, 0.35, 0.5, 0.75],
+      },
+    );
+
+    sections.forEach((section) => observer.observe(section));
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -25,11 +58,11 @@ export default function AdminHeader() {
   };
 
   return (
-    <header className="mx-auto w-full max-w-7xl rounded-[28px] border border-line/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.94)_0%,rgba(246,241,232,0.98)_100%)] px-5 py-5 shadow-[0_24px_60px_-42px_rgba(11,27,43,0.38)] backdrop-blur sm:px-6 sm:py-6">
+    <header className="mx-auto w-full max-w-7xl rounded-[22px] border border-line/80 bg-white/94 px-5 py-5 shadow-[0_18px_40px_-34px_rgba(11,27,43,0.22)] backdrop-blur sm:px-6 sm:py-6">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-line bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
-            <span className="h-2 w-2 rounded-full bg-accent" />
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-line bg-[#f8f4ec] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+            <span className="h-2 w-2 rounded-full bg-[#2f855a]" />
             Admin Console
           </div>
           <Link
@@ -44,10 +77,10 @@ export default function AdminHeader() {
           </p>
         </div>
 
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="hidden items-center gap-3 lg:flex">
           <Link
             href="/profile"
-            className="inline-flex items-center rounded-full border border-line bg-white px-4 py-2 text-sm font-semibold text-foreground transition hover:border-foreground"
+            className="inline-flex items-center rounded-full border border-line bg-[#fcfaf6] px-4 py-2 text-sm font-semibold text-foreground transition hover:border-foreground"
           >
             Player App
           </Link>
@@ -63,69 +96,101 @@ export default function AdminHeader() {
         <button
           type="button"
           onClick={() => setMenuOpen((current) => !current)}
-          className="inline-flex items-center justify-center rounded-full border border-line bg-white px-4 py-2 text-sm font-semibold transition hover:border-foreground md:hidden"
-          aria-label="Toggle admin navigation"
+          className="inline-flex items-center justify-center rounded-full border border-line bg-[#fcfaf6] px-4 py-2 text-sm font-semibold transition hover:border-foreground lg:hidden"
+          aria-label="Toggle admin actions"
           aria-expanded={menuOpen}
         >
-          Menu
+          More
         </button>
       </div>
 
-      <div className="mt-6 rounded-[24px] border border-line bg-white/78 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
-        <nav className="hidden items-center gap-2 overflow-x-auto no-scrollbar md:flex">
+      <div className="mt-6 rounded-[18px] border border-line bg-[#fcfaf6] p-2">
+        <nav className="hidden items-center gap-1 overflow-x-auto no-scrollbar lg:flex">
           {navItems.map((item) => (
             <a
               key={item.href}
               href={item.href}
-              className="shrink-0 rounded-2xl px-4 py-2.5 text-sm font-semibold text-muted transition hover:bg-[#f6f1e8] hover:text-foreground"
+              className={`shrink-0 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
+                activeSection === item.href
+                  ? "bg-white text-foreground shadow-[0_8px_20px_-18px_rgba(11,27,43,0.45)]"
+                  : "text-muted hover:bg-white hover:text-foreground"
+              }`}
             >
               {item.label}
             </a>
           ))}
         </nav>
 
-        <div className="flex items-center justify-between gap-3 md:hidden">
-          <p className="px-2 text-sm font-semibold text-foreground">
-            Dashboard sections
-          </p>
-          <span className="rounded-full bg-[#f6f1e8] px-3 py-1 text-xs font-semibold text-muted">
-            {navItems.length} links
-          </span>
+        <div className="flex items-center gap-2 lg:hidden">
+          <label htmlFor="admin-section-nav" className="sr-only">
+            Jump to admin section
+          </label>
+          <select
+            id="admin-section-nav"
+            value={activeSection}
+            onChange={(event) => {
+              const nextHref = event.target.value;
+              setActiveSection(nextHref);
+              setMenuOpen(false);
+              window.location.hash = nextHref;
+            }}
+            className="w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm font-semibold text-foreground outline-none transition focus:border-foreground"
+          >
+            {navItems.map((item) => (
+              <option key={item.href} value={item.href}>
+                {item.label}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={() => setMenuOpen((current) => !current)}
+            className="inline-flex shrink-0 items-center justify-center rounded-2xl border border-line bg-white px-4 py-3 text-sm font-semibold text-foreground transition hover:border-foreground"
+            aria-label="Toggle admin actions"
+            aria-expanded={menuOpen}
+          >
+            More
+          </button>
         </div>
       </div>
 
       {menuOpen ? (
-        <div className="mt-4 space-y-4 rounded-[24px] border border-line bg-white p-4 shadow-[0_20px_45px_-35px_rgba(11,27,43,0.45)] md:hidden">
-          <div className="grid gap-2 sm:grid-cols-2">
-            {navItems.map((item) => (
-              <a
-                key={item.href}
-                href={item.href}
-                onClick={() => setMenuOpen(false)}
-                className="rounded-2xl border border-line px-4 py-3 text-sm font-semibold transition hover:border-foreground"
-              >
-                {item.label}
-              </a>
-            ))}
+        <div className="mt-4 grid gap-2 rounded-[18px] border border-line bg-white p-3 shadow-[0_18px_40px_-34px_rgba(11,27,43,0.24)] lg:hidden sm:grid-cols-2">
+          <div className="rounded-2xl border border-line bg-[#fcfaf6] px-4 py-3 text-sm">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+              Current section
+            </p>
+            <p className="mt-1 font-semibold text-foreground">
+              {navItems.find((item) => item.href === activeSection)?.label ?? "Overview"}
+            </p>
           </div>
-          <div className="grid gap-2 sm:grid-cols-2">
-            <Link
-              href="/profile"
-              onClick={() => setMenuOpen(false)}
-              className="rounded-2xl border border-line px-4 py-3 text-center text-sm font-semibold transition hover:border-foreground"
-            >
-              Player App
-            </Link>
-            <button
-              type="button"
-              onClick={handleSignOut}
-              className="rounded-2xl bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-[#1e3347]"
-            >
-              Sign out
-            </button>
-          </div>
+          <div className="hidden sm:block" />
+          <Link
+            href="/profile"
+            onClick={() => setMenuOpen(false)}
+            className="rounded-2xl border border-line px-4 py-3 text-center text-sm font-semibold transition hover:border-foreground"
+          >
+            Player App
+          </Link>
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="rounded-2xl bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-[#1e3347]"
+          >
+            Sign out
+          </button>
         </div>
       ) : null}
+
+      <div className="mt-4 hidden items-center justify-between gap-3 border-t border-line/80 pt-4 lg:flex">
+        <p className="text-sm text-muted">
+          {navItems.find((item) => item.href === activeSection)?.label ?? "Overview"}
+        </p>
+        <div className="flex items-center gap-2 text-xs text-muted">
+          <span className="h-2 w-2 rounded-full bg-[#2f855a]" />
+          Live admin workspace
+        </div>
+      </div>
     </header>
   );
 }
