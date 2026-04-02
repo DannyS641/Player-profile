@@ -107,6 +107,12 @@ export default function AppHeader() {
             Documents
           </Link>
           <Link
+            href="/media-dump"
+            className="px-2 py-1 transition hover:text-foreground"
+          >
+            Media Dump
+          </Link>
+          <Link
             href="/schedule"
             className="px-2 py-1 transition hover:text-foreground"
           >
@@ -176,6 +182,13 @@ export default function AppHeader() {
               onClick={() => setMenuOpen(false)}
             >
               Documents
+            </Link>
+            <Link
+              href="/media-dump"
+              className="rounded-full border border-line px-4 py-2 text-sm font-semibold transition hover:border-foreground"
+              onClick={() => setMenuOpen(false)}
+            >
+              Media Dump
             </Link>
             <Link
               href="/schedule"

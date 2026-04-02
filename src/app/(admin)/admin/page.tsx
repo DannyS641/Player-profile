@@ -64,6 +64,14 @@ type ScheduleRow = {
   sort_order: number;
 };
 
+type MediaFile = {
+  path: string;
+  name: string;
+  userId: string;
+  created_at: string | null;
+  signedUrl: string | null;
+};
+
 const statuses = ["active", "inactive", "suspended"];
 
 const toCsv = (rows: Record<string, string | number | null | undefined>[]) => {
@@ -116,6 +124,8 @@ export default function AdminPage() {
   const [schedule, setSchedule] = useState<ScheduleRow[]>([]);
   const [docFiles, setDocFiles] = useState<{ path: string; name: string; userId: string }[]>([]);
   const [docFilter, setDocFilter] = useState<string | null>(null);
+  const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
+  const [mediaFilter, setMediaFilter] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [sessionSettings, setSessionSettings] = useState({
@@ -226,6 +236,7 @@ export default function AdminPage() {
         .order("sort_order", { ascending: true });
 
       const docResults: { path: string; name: string; userId: string }[] = [];
+      const mediaResults: Omit<MediaFile, "signedUrl">[] = [];
       for (const player of playersData ?? []) {
         const userId = (player as Player).id;
         const { data: files } = await supabase.storage
@@ -238,7 +249,34 @@ export default function AdminPage() {
             path: `${userId}/${file.name}`,
           });
         });
+
+        const { data: media } = await supabase.storage
+          .from("media-dump")
+          .list(userId, {
+            limit: 25,
+            sortBy: { column: "created_at", order: "desc" },
+          });
+        (media ?? []).forEach((file) => {
+          mediaResults.push({
+            userId,
+            name: file.name,
+            path: `${userId}/${file.name}`,
+            created_at: file.created_at ?? null,
+          });
+        });
       }
+
+      const mediaUrls = await Promise.all(
+        mediaResults.map(async (file) => {
+          const { data } = await supabase.storage
+            .from("media-dump")
+            .createSignedUrl(file.path, 3600);
+          return {
+            path: file.path,
+            signedUrl: data?.signedUrl ?? null,
+          };
+        }),
+      );
 
       if (isMounted) {
         setPlayers((playersData as Player[]) ?? []);
@@ -247,6 +285,13 @@ export default function AdminPage() {
         setResources((resourceData as ResourceRow[]) ?? []);
         setSchedule((scheduleData as ScheduleRow[]) ?? []);
         setDocFiles(docResults);
+        setMediaFiles(
+          mediaResults.map((file) => ({
+            ...file,
+            signedUrl:
+              mediaUrls.find((item) => item.path === file.path)?.signedUrl ?? null,
+          })),
+        );
         setSessionSettings({
           zoom_link: settings?.zoom_link ?? "",
           meeting_id: settings?.meeting_id ?? "",
@@ -298,6 +343,16 @@ export default function AdminPage() {
     return map;
   }, [docFiles]);
 
+  const playerMediaMap = useMemo(() => {
+    const map = new Map<string, MediaFile[]>();
+    mediaFiles.forEach((file) => {
+      const list = map.get(file.userId) ?? [];
+      list.push(file);
+      map.set(file.userId, list);
+    });
+    return map;
+  }, [mediaFiles]);
+
   const playerById = useMemo(() => {
     return new Map(players.map((player) => [player.id, player]));
   }, [players]);
@@ -305,6 +360,10 @@ export default function AdminPage() {
   const visibleDocs = docFilter
     ? docFiles.filter((file) => file.userId === docFilter)
     : docFiles;
+
+  const visibleMedia = mediaFilter
+    ? mediaFiles.filter((file) => file.userId === mediaFilter)
+    : mediaFiles;
 
   const attendanceTrend = useMemo(() => {
     const range = buildDateRange(14);
@@ -612,7 +671,10 @@ export default function AdminPage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8">
+      <div
+        id="admin-overview"
+        className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8"
+      >
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="font-display text-3xl">Admin dashboard</h1>
@@ -701,7 +763,10 @@ export default function AdminPage() {
         </div>
       </div>
 
-      <div className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8">
+      <div
+        id="admin-attendance-trend"
+        className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8"
+      >
         <div className="flex items-center justify-between">
           <div>
             <h2 className="font-display text-2xl">Attendance trend</h2>
@@ -752,7 +817,10 @@ export default function AdminPage() {
         </div>
       </div>
 
-      <div className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8">
+      <div
+        id="admin-session-settings"
+        className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8"
+      >
         <div>
           <h2 className="font-display text-2xl">Session settings</h2>
           <p className="text-sm text-muted">
@@ -845,7 +913,10 @@ export default function AdminPage() {
         </button>
       </div>
 
-      <div className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8">
+      <div
+        id="admin-attendance-overrides"
+        className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8"
+      >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="font-display text-2xl">Attendance overrides</h2>
@@ -927,7 +998,10 @@ export default function AdminPage() {
         ) : null}
       </div>
 
-      <div className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8">
+      <div
+        id="admin-players"
+        className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8"
+      >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="font-display text-2xl">Players</h2>
@@ -955,13 +1029,14 @@ export default function AdminPage() {
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Socials</th>
                 <th className="px-4 py-3">Docs</th>
+                <th className="px-4 py-3">Media</th>
                 <th className="px-4 py-3">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredPlayers.length === 0 ? (
                 <tr>
-                  <td className="px-4 py-6 text-muted" colSpan={9}>
+                  <td className="px-4 py-6 text-muted" colSpan={10}>
                     No players found.
                   </td>
                 </tr>
@@ -1035,6 +1110,30 @@ export default function AdminPage() {
                       </div>
                     </td>
                     <td className="px-4 py-4">
+                      <div className="flex items-center gap-2 text-xs text-muted">
+                        <span>
+                          {(playerMediaMap.get(player.id) ?? []).length} videos
+                        </span>
+                        {(playerMediaMap.get(player.id) ?? []).length > 0 ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setMediaFilter(player.id);
+                              const section =
+                                document.getElementById("admin-media-dump");
+                              section?.scrollIntoView({
+                                behavior: "smooth",
+                                block: "start",
+                              });
+                            }}
+                            className="rounded-full border border-line px-3 py-1 text-[11px] font-semibold transition hover:border-foreground"
+                          >
+                            View
+                          </button>
+                        ) : null}
+                      </div>
+                    </td>
+                    <td className="px-4 py-4">
                       <div className="text-xs text-muted">
                         Updated{" "}
                         {player.updated_at
@@ -1050,7 +1149,10 @@ export default function AdminPage() {
         </div>
       </div>
 
-      <div className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8">
+      <div
+        id="admin-education-resources"
+        className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8"
+      >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="font-display text-2xl">Education resources</h2>
@@ -1165,7 +1267,10 @@ export default function AdminPage() {
         </div>
       </div>
 
-      <div className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8">
+      <div
+        id="admin-weekly-schedule"
+        className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8"
+      >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="font-display text-2xl">Weekly schedule</h2>
@@ -1317,6 +1422,75 @@ export default function AdminPage() {
                   Delete
                 </button>
               </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      <div
+        id="admin-media-dump"
+        className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8"
+      >
+        <div>
+          <h2 className="font-display text-2xl">Media dump (player videos)</h2>
+          <p className="text-sm text-muted">
+            Watch videos uploaded by players.
+          </p>
+        </div>
+        {mediaFilter ? (
+          <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted">
+            <span>
+              Showing videos for{" "}
+              <strong className="text-foreground">
+                {playerById.get(mediaFilter)?.full_name ?? "Selected player"}
+              </strong>
+            </span>
+            <button
+              type="button"
+              onClick={() => setMediaFilter(null)}
+              className="rounded-full border border-line px-3 py-1 text-[11px] font-semibold transition hover:border-foreground"
+            >
+              Clear filter
+            </button>
+          </div>
+        ) : null}
+        <div className="mt-6 grid gap-5 lg:grid-cols-2">
+          {visibleMedia.length === 0 ? (
+            <p className="text-sm text-muted">No videos uploaded yet.</p>
+          ) : (
+            visibleMedia.map((file) => (
+              <article
+                key={file.path}
+                className="overflow-hidden rounded-[26px] border border-line bg-[#fbf8f2]"
+              >
+                <div className="aspect-video bg-[#d9d2c4]">
+                  {file.signedUrl ? (
+                    <video
+                      controls
+                      preload="metadata"
+                      className="h-full w-full object-cover"
+                      src={file.signedUrl}
+                    >
+                      Your browser does not support video playback.
+                    </video>
+                  ) : (
+                    <div className="flex h-full items-center justify-center px-4 text-center text-sm text-muted">
+                      Preview unavailable right now.
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-2 px-5 py-4">
+                  <p className="text-sm font-semibold">{file.name}</p>
+                  <p className="text-xs text-muted">
+                    Player: {playerById.get(file.userId)?.full_name ?? file.userId}
+                  </p>
+                  <p className="text-xs text-muted">
+                    {file.created_at
+                      ? new Date(file.created_at).toLocaleString()
+                      : "Recently uploaded"}
+                  </p>
+                </div>
+              </article>
             ))
           )}
         </div>

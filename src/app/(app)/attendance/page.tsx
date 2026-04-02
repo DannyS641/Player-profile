@@ -16,7 +16,6 @@ export default function AttendancePage() {
   const [rows, setRows] = useState<AttendanceRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [minMinutes, setMinMinutes] = useState(10);
 
   useEffect(() => {
@@ -33,7 +32,6 @@ export default function AttendancePage() {
 
       if (isMounted) {
         setUserId(userData.user.id);
-        setUserEmail(userData.user.email ?? null);
       }
 
       const { data: settings } = await supabase

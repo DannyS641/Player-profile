@@ -297,6 +297,11 @@ export default function ProfilePage() {
         >
           Edit profile in settings
         </Link>
+        {message ? (
+          <p className="rounded-2xl border border-line bg-[#f6fff1] px-4 py-3 text-sm text-[#1c5924]">
+            {message}
+          </p>
+        ) : null}
       </div>
       <aside className="space-y-5">
         <div className="rounded-[28px] border border-line bg-foreground p-6 text-background sm:p-7">

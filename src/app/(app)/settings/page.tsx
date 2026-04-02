@@ -476,11 +476,12 @@ export default function SettingsPage() {
             )}
           </div>
           <label className="cursor-pointer rounded-full border border-line bg-white px-4 py-2 text-xs font-semibold transition hover:border-foreground">
-            Upload photo
+            {savingPhoto ? "Uploading..." : "Upload photo"}
             <input
               type="file"
               accept="image/*"
               onChange={handlePhotoUpload}
+              disabled={savingPhoto}
               className="hidden"
             />
           </label>

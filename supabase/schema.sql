@@ -1,5 +1,7 @@
 create extension if not exists "pgcrypto";
 
+-- Core application schema. This section is safe to rerun.
+
 create table if not exists profiles (
   id uuid primary key references auth.users (id) on delete cascade,
   email text,
@@ -98,6 +100,17 @@ alter table attendance_overrides enable row level security;
 alter table education_resources enable row level security;
 alter table weekly_schedule enable row level security;
 
+-- Storage bucket bootstrap for player videos.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'media-dump',
+  'media-dump',
+  false,
+  1073741824,
+  array['video/mp4', 'video/webm', 'video/quicktime', 'video/ogg']
+)
+on conflict (id) do nothing;
+
 -- Helper for admin checks
 create or replace function public.is_admin()
 returns boolean
@@ -109,6 +122,34 @@ as $$
     select 1 from profiles where id = auth.uid() and role = 'admin'
   );
 $$;
+
+drop policy if exists "Profiles are viewable by owner" on profiles;
+drop policy if exists "Profiles are insertable by owner" on profiles;
+drop policy if exists "Profiles are updatable by owner" on profiles;
+drop policy if exists "Attendance is viewable by owner" on attendance;
+drop policy if exists "Attendance is insertable by owner" on attendance;
+drop policy if exists "App settings are readable" on app_settings;
+drop policy if exists "App settings are updatable by admin" on app_settings;
+drop policy if exists "App settings are insertable by admin" on app_settings;
+drop policy if exists "Attendance events are viewable by owner" on attendance_events;
+drop policy if exists "Attendance events are insertable by admin" on attendance_events;
+drop policy if exists "Attendance events are updatable by admin" on attendance_events;
+drop policy if exists "Attendance overrides are viewable by owner" on attendance_overrides;
+drop policy if exists "Attendance overrides are insertable by admin" on attendance_overrides;
+drop policy if exists "Attendance overrides are updatable by admin" on attendance_overrides;
+drop policy if exists "Attendance overrides are deletable by admin" on attendance_overrides;
+drop policy if exists "Education resources are viewable" on education_resources;
+drop policy if exists "Education resources are insertable by admin" on education_resources;
+drop policy if exists "Education resources are updatable by admin" on education_resources;
+drop policy if exists "Education resources are deletable by admin" on education_resources;
+drop policy if exists "Weekly schedule is viewable" on weekly_schedule;
+drop policy if exists "Weekly schedule is insertable by admin" on weekly_schedule;
+drop policy if exists "Weekly schedule is updatable by admin" on weekly_schedule;
+drop policy if exists "Weekly schedule is deletable by admin" on weekly_schedule;
+drop policy if exists "Avatar images are public" on storage.objects;
+drop policy if exists "Avatar uploads by owner" on storage.objects;
+drop policy if exists "Avatar updates by owner" on storage.objects;
+drop policy if exists "Avatar deletes by owner" on storage.objects;
 
 create policy "Profiles are viewable by owner"
   on profiles for select
@@ -218,8 +259,10 @@ create policy "Weekly schedule is deletable by admin"
   on weekly_schedule for delete
   using (public.is_admin());
 
--- Storage policies for avatar uploads
-alter table storage.objects enable row level security;
+-- Storage policies.
+-- Do not run `alter table storage.objects enable row level security;`
+-- here, because `storage.objects` is managed by Supabase and the SQL editor
+-- role is not the table owner.
 
 create policy "Avatar images are public"
   on storage.objects for select
@@ -317,5 +360,46 @@ create policy "Education uploads deletes by owner"
   on storage.objects for delete
   using (
     bucket_id = 'education'
+    and auth.uid()::text = (storage.foldername(name))[1]
+  );
+
+drop policy if exists "Media dump viewable by owner" on storage.objects;
+drop policy if exists "Media dump uploads by owner" on storage.objects;
+drop policy if exists "Media dump updates by owner" on storage.objects;
+drop policy if exists "Media dump deletes by owner" on storage.objects;
+
+create policy "Media dump viewable by owner"
+  on storage.objects for select
+  using (
+    bucket_id = 'media-dump'
+    and (
+      auth.uid() = owner
+      or public.is_admin()
+      or auth.uid()::text = (storage.foldername(name))[1]
+    )
+  );
+
+create policy "Media dump uploads by owner"
+  on storage.objects for insert
+  with check (
+    bucket_id = 'media-dump'
+    and auth.uid()::text = (storage.foldername(name))[1]
+  );
+
+create policy "Media dump updates by owner"
+  on storage.objects for update
+  using (
+    bucket_id = 'media-dump'
+    and auth.uid()::text = (storage.foldername(name))[1]
+  )
+  with check (
+    bucket_id = 'media-dump'
+    and auth.uid()::text = (storage.foldername(name))[1]
+  );
+
+create policy "Media dump deletes by owner"
+  on storage.objects for delete
+  using (
+    bucket_id = 'media-dump'
     and auth.uid()::text = (storage.foldername(name))[1]
   );
