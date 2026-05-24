@@ -118,8 +118,21 @@ export default function ProfilePage() {
       return;
     }
 
+    const today = new Date().toISOString().slice(0, 10);
+    const { error: checkInError } = await supabase
+      .from("attendance")
+      .upsert(
+        { player_id: userId, session_date: today, method: "self_checkin" },
+        { onConflict: "player_id,session_date", ignoreDuplicates: true },
+      );
+
+    if (checkInError) {
+      setMessage(`Could not record check-in: ${checkInError.message}`);
+      return;
+    }
+
     setMessage(
-      `Opening Zoom. Attendance will be verified after ${minMinutes} minutes.`,
+      `Check-in recorded. Stay in Zoom at least ${minMinutes} minutes for verified attendance.`,
     );
     window.open(zoomLink, "_blank", "noopener,noreferrer");
   };

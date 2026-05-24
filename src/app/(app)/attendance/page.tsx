@@ -59,6 +59,12 @@ export default function AttendancePage() {
         .eq("player_id", userData.user.id)
         .order("session_date", { ascending: false });
 
+      const { data: selfCheckIns } = await supabase
+        .from("attendance")
+        .select("session_date, method")
+        .eq("player_id", userData.user.id)
+        .order("session_date", { ascending: false });
+
       const eventMap = new Map<string, number>();
       (events ?? []).forEach((event) => {
         const minutes = event.duration_minutes ?? 0;
@@ -74,10 +80,16 @@ export default function AttendancePage() {
         });
       });
 
+      const checkInMap = new Map<string, string>();
+      (selfCheckIns ?? []).forEach((row) => {
+        checkInMap.set(row.session_date, row.method ?? "self_checkin");
+      });
+
       const dates = Array.from(
         new Set([
           ...Array.from(eventMap.keys()),
           ...Array.from(overrideMap.keys()),
+          ...Array.from(checkInMap.keys()),
         ]),
       ).sort((a, b) => (a < b ? 1 : -1));
 
@@ -96,16 +108,35 @@ export default function AttendancePage() {
                 note: override.reason || "Admin override",
               };
             }
-            const minutes = eventMap.get(date) ?? 0;
-            const status = minutes >= minimum ? "present" : "absent";
+            const minutes = eventMap.get(date);
+            if (minutes !== undefined) {
+              const status = minutes >= minimum ? "present" : "absent";
+              return {
+                session_date: date,
+                status,
+                minutes,
+                source: "zoom",
+                note: minutes
+                  ? `Stayed ${minutes} mins`
+                  : "No join detected",
+              };
+            }
+            const method = checkInMap.get(date);
+            if (method === "zoom_webhook") {
+              return {
+                session_date: date,
+                status: "present",
+                minutes: 0,
+                source: "zoom",
+                note: "Verified by Zoom",
+              };
+            }
             return {
               session_date: date,
-              status,
-              minutes,
-              source: "zoom",
-              note: minutes
-                ? `Stayed ${minutes} mins`
-                : "No join detected",
+              status: "pending",
+              minutes: 0,
+              source: "self_checkin",
+              note: "Checked in — awaiting Zoom verification",
             };
           }),
         );
@@ -187,7 +218,9 @@ export default function AttendancePage() {
                       className={`rounded-full px-3 py-1 text-xs font-semibold ${
                         row.status === "present"
                           ? "bg-[#e7f7ea] text-[#1c5924]"
-                          : "bg-[#fff4f0] text-[#8f2b18]"
+                          : row.status === "pending"
+                            ? "bg-[#fff7e6] text-[#8a5a00]"
+                            : "bg-[#fff4f0] text-[#8f2b18]"
                       }`}
                     >
                       {row.status}
