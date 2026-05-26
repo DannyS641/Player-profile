@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
+import { friendlyName } from "@/lib/files";
+import { useConfirm } from "@/components/ConfirmDialog";
 
 type Player = {
   id: string;
@@ -123,9 +125,9 @@ export default function AdminPage() {
   const [resources, setResources] = useState<ResourceRow[]>([]);
   const [schedule, setSchedule] = useState<ScheduleRow[]>([]);
   const [docFiles, setDocFiles] = useState<{ path: string; name: string; userId: string }[]>([]);
-  const [docFilter, setDocFilter] = useState<string | null>(null);
+  const [essayFiles, setEssayFiles] = useState<{ path: string; name: string; userId: string }[]>([]);
   const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
-  const [mediaFilter, setMediaFilter] = useState<string | null>(null);
+  const [openPlayers, setOpenPlayers] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [sessionSettings, setSessionSettings] = useState({
@@ -159,6 +161,7 @@ export default function AdminPage() {
     sort_order: 1,
   });
   const [savingSchedule, setSavingSchedule] = useState(false);
+  const confirm = useConfirm();
 
   useEffect(() => {
     let isMounted = true;
@@ -236,6 +239,7 @@ export default function AdminPage() {
         .order("sort_order", { ascending: true });
 
       const docResults: { path: string; name: string; userId: string }[] = [];
+      const essayResults: { path: string; name: string; userId: string }[] = [];
       const mediaResults: Omit<MediaFile, "signedUrl">[] = [];
       for (const player of playersData ?? []) {
         const userId = (player as Player).id;
@@ -244,6 +248,17 @@ export default function AdminPage() {
           .list(userId, { limit: 25 });
         (files ?? []).forEach((file) => {
           docResults.push({
+            userId,
+            name: file.name,
+            path: `${userId}/${file.name}`,
+          });
+        });
+
+        const { data: essays } = await supabase.storage
+          .from("education")
+          .list(userId, { limit: 25 });
+        (essays ?? []).forEach((file) => {
+          essayResults.push({
             userId,
             name: file.name,
             path: `${userId}/${file.name}`,
@@ -285,6 +300,7 @@ export default function AdminPage() {
         setResources((resourceData as ResourceRow[]) ?? []);
         setSchedule((scheduleData as ScheduleRow[]) ?? []);
         setDocFiles(docResults);
+        setEssayFiles(essayResults);
         setMediaFiles(
           mediaResults.map((file) => ({
             ...file,
@@ -353,17 +369,48 @@ export default function AdminPage() {
     return map;
   }, [mediaFiles]);
 
-  const playerById = useMemo(() => {
-    return new Map(players.map((player) => [player.id, player]));
-  }, [players]);
+  const playerEssaysMap = useMemo(() => {
+    const map = new Map<string, { path: string; name: string; userId: string }[]>();
+    essayFiles.forEach((file) => {
+      const list = map.get(file.userId) ?? [];
+      list.push(file);
+      map.set(file.userId, list);
+    });
+    return map;
+  }, [essayFiles]);
 
-  const visibleDocs = docFilter
-    ? docFiles.filter((file) => file.userId === docFilter)
-    : docFiles;
+  const togglePlayerFolder = (id: string) => {
+    setOpenPlayers((current) => {
+      const next = new Set(current);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
 
-  const visibleMedia = mediaFilter
-    ? mediaFiles.filter((file) => file.userId === mediaFilter)
-    : mediaFiles;
+  const openAllFolders = () => {
+    setOpenPlayers(new Set(players.map((player) => player.id)));
+  };
+
+  const closeAllFolders = () => {
+    setOpenPlayers(new Set());
+  };
+
+  const focusPlayerFolder = (id: string) => {
+    setOpenPlayers((current) => {
+      const next = new Set(current);
+      next.add(id);
+      return next;
+    });
+    requestAnimationFrame(() => {
+      document
+        .getElementById(`admin-folder-${id}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
 
   const attendanceTrend = useMemo(() => {
     const range = buildDateRange(14);
@@ -632,6 +679,68 @@ export default function AdminPage() {
       return;
     }
     window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+  };
+
+  const handleEssayDownload = async (path: string) => {
+    const { data, error } = await supabase.storage
+      .from("education")
+      .createSignedUrl(path, 3600);
+    if (error) {
+      setMessage(error.message);
+      return;
+    }
+    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+  };
+
+  const handleVideoDelete = async (path: string, name: string) => {
+    const ok = await confirm({
+      title: "Delete this video?",
+      description: `"${friendlyName(name)}" will be permanently removed from the player's media dump. This cannot be undone.`,
+      confirmLabel: "Delete video",
+      tone: "destructive",
+    });
+    if (!ok) return;
+    const { error } = await supabase.storage.from("media-dump").remove([path]);
+    if (error) {
+      setMessage(error.message);
+      return;
+    }
+    setMediaFiles((current) => current.filter((file) => file.path !== path));
+    setMessage("Video deleted.");
+  };
+
+  const handleDocDelete = async (path: string, name: string) => {
+    const ok = await confirm({
+      title: "Delete this document?",
+      description: `"${friendlyName(name)}" will be permanently removed from the player's uploads. This cannot be undone.`,
+      confirmLabel: "Delete document",
+      tone: "destructive",
+    });
+    if (!ok) return;
+    const { error } = await supabase.storage.from("documents").remove([path]);
+    if (error) {
+      setMessage(error.message);
+      return;
+    }
+    setDocFiles((current) => current.filter((file) => file.path !== path));
+    setMessage("Document deleted.");
+  };
+
+  const handleEssayDelete = async (path: string, name: string) => {
+    const ok = await confirm({
+      title: "Delete this essay?",
+      description: `"${friendlyName(name)}" will be permanently removed from the player's submissions. This cannot be undone.`,
+      confirmLabel: "Delete essay",
+      tone: "destructive",
+    });
+    if (!ok) return;
+    const { error } = await supabase.storage.from("education").remove([path]);
+    if (error) {
+      setMessage(error.message);
+      return;
+    }
+    setEssayFiles((current) => current.filter((file) => file.path !== path));
+    setMessage("Essay deleted.");
   };
 
   if (loading) {
@@ -1028,15 +1137,14 @@ export default function AdminPage() {
                 <th className="px-4 py-3">Phone</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Socials</th>
-                <th className="px-4 py-3">Docs</th>
-                <th className="px-4 py-3">Media</th>
+                <th className="px-4 py-3">Files</th>
                 <th className="px-4 py-3">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredPlayers.length === 0 ? (
                 <tr>
-                  <td className="px-4 py-6 text-muted" colSpan={10}>
+                  <td className="px-4 py-6 text-muted" colSpan={9}>
                     No players found.
                   </td>
                 </tr>
@@ -1086,52 +1194,28 @@ export default function AdminPage() {
                       </div>
                     </td>
                     <td className="px-4 py-4">
-                      <div className="flex items-center gap-2 text-xs text-muted">
-                        <span>
-                          {(playerDocsMap.get(player.id) ?? []).length} files
-                        </span>
-                        {(playerDocsMap.get(player.id) ?? []).length > 0 ? (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setDocFilter(player.id);
-                              const section =
-                                document.getElementById("admin-documents");
-                              section?.scrollIntoView({
-                                behavior: "smooth",
-                                block: "start",
-                              });
-                            }}
-                            className="rounded-full border border-line px-3 py-1 text-[11px] font-semibold transition hover:border-foreground"
-                          >
-                            View
-                          </button>
-                        ) : null}
-                      </div>
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="flex items-center gap-2 text-xs text-muted">
-                        <span>
-                          {(playerMediaMap.get(player.id) ?? []).length} videos
-                        </span>
-                        {(playerMediaMap.get(player.id) ?? []).length > 0 ? (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setMediaFilter(player.id);
-                              const section =
-                                document.getElementById("admin-media-dump");
-                              section?.scrollIntoView({
-                                behavior: "smooth",
-                                block: "start",
-                              });
-                            }}
-                            className="rounded-full border border-line px-3 py-1 text-[11px] font-semibold transition hover:border-foreground"
-                          >
-                            View
-                          </button>
-                        ) : null}
-                      </div>
+                      {(() => {
+                        const videos = (playerMediaMap.get(player.id) ?? []).length;
+                        const docs = (playerDocsMap.get(player.id) ?? []).length;
+                        const essays = (playerEssaysMap.get(player.id) ?? []).length;
+                        const total = videos + docs + essays;
+                        return (
+                          <div className="flex flex-col gap-1 text-xs text-muted">
+                            <span>
+                              {videos} videos · {docs} docs · {essays} essays
+                            </span>
+                            {total > 0 ? (
+                              <button
+                                type="button"
+                                onClick={() => focusPlayerFolder(player.id)}
+                                className="self-start rounded-full border border-line px-3 py-1 text-[11px] font-semibold transition hover:border-foreground"
+                              >
+                                Open folder
+                              </button>
+                            ) : null}
+                          </div>
+                        );
+                      })()}
                     </td>
                     <td className="px-4 py-4">
                       <div className="text-xs text-muted">
@@ -1428,125 +1512,221 @@ export default function AdminPage() {
       </div>
 
       <div
-        id="admin-media-dump"
+        id="admin-player-folders"
         className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8"
       >
-        <div>
-          <h2 className="font-display text-2xl">Media dump (player videos)</h2>
-          <p className="text-sm text-muted">
-            Watch videos uploaded by players.
-          </p>
-        </div>
-        {mediaFilter ? (
-          <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted">
-            <span>
-              Showing videos for{" "}
-              <strong className="text-foreground">
-                {playerById.get(mediaFilter)?.full_name ?? "Selected player"}
-              </strong>
-            </span>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="font-display text-2xl">Player folders</h2>
+            <p className="text-sm text-muted">
+              Each player has a folder with their videos, documents, and essays.
+            </p>
+          </div>
+          <div className="flex gap-2">
             <button
               type="button"
-              onClick={() => setMediaFilter(null)}
-              className="rounded-full border border-line px-3 py-1 text-[11px] font-semibold transition hover:border-foreground"
+              onClick={openAllFolders}
+              className="rounded-full border border-line px-3 py-1 text-xs font-semibold transition hover:border-foreground"
             >
-              Clear filter
+              Expand all
             </button>
-          </div>
-        ) : null}
-        <div className="mt-6 grid gap-5 lg:grid-cols-2">
-          {visibleMedia.length === 0 ? (
-            <p className="text-sm text-muted">No videos uploaded yet.</p>
-          ) : (
-            visibleMedia.map((file) => (
-              <article
-                key={file.path}
-                className="overflow-hidden rounded-[26px] border border-line bg-[#fbf8f2]"
-              >
-                <div className="aspect-video bg-[#d9d2c4]">
-                  {file.signedUrl ? (
-                    <video
-                      controls
-                      preload="metadata"
-                      className="h-full w-full object-cover"
-                      src={file.signedUrl}
-                    >
-                      Your browser does not support video playback.
-                    </video>
-                  ) : (
-                    <div className="flex h-full items-center justify-center px-4 text-center text-sm text-muted">
-                      Preview unavailable right now.
-                    </div>
-                  )}
-                </div>
-                <div className="space-y-2 px-5 py-4">
-                  <p className="text-sm font-semibold">{file.name}</p>
-                  <p className="text-xs text-muted">
-                    Player: {playerById.get(file.userId)?.full_name ?? file.userId}
-                  </p>
-                  <p className="text-xs text-muted">
-                    {file.created_at
-                      ? new Date(file.created_at).toLocaleString()
-                      : "Recently uploaded"}
-                  </p>
-                </div>
-              </article>
-            ))
-          )}
-        </div>
-      </div>
-
-      <div
-        id="admin-documents"
-        className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8"
-      >
-        <div>
-          <h2 className="font-display text-2xl">Documents (player uploads)</h2>
-          <p className="text-sm text-muted">
-            Download documents submitted by players.
-          </p>
-        </div>
-        {docFilter ? (
-          <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted">
-            <span>
-              Showing documents for{" "}
-              <strong className="text-foreground">
-                {playerById.get(docFilter)?.full_name ?? "Selected player"}
-              </strong>
-            </span>
             <button
               type="button"
-              onClick={() => setDocFilter(null)}
-              className="rounded-full border border-line px-3 py-1 text-[11px] font-semibold transition hover:border-foreground"
+              onClick={closeAllFolders}
+              className="rounded-full border border-line px-3 py-1 text-xs font-semibold transition hover:border-foreground"
             >
-              Clear filter
+              Collapse all
             </button>
           </div>
-        ) : null}
-        <div className="mt-4 space-y-3">
-          {visibleDocs.length === 0 ? (
-            <p className="text-sm text-muted">No documents uploaded yet.</p>
+        </div>
+        <div className="mt-6 space-y-4">
+          {players.length === 0 ? (
+            <p className="text-sm text-muted">No players yet.</p>
           ) : (
-            visibleDocs.map((file) => (
-              <div
-                key={file.path}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line px-4 py-3"
-              >
-                <div>
-                  <p className="text-sm font-semibold">{file.name}</p>
-                  <p className="text-xs text-muted">
-                    Player: {playerById.get(file.userId)?.full_name ?? file.userId}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => handleDocDownload(file.path)}
-                  className="rounded-full border border-line px-3 py-1 text-xs font-semibold transition hover:border-foreground"
+            players.map((player) => {
+              const videos = playerMediaMap.get(player.id) ?? [];
+              const docs = playerDocsMap.get(player.id) ?? [];
+              const essays = playerEssaysMap.get(player.id) ?? [];
+              const total = videos.length + docs.length + essays.length;
+              const isOpen = openPlayers.has(player.id);
+              return (
+                <article
+                  key={player.id}
+                  id={`admin-folder-${player.id}`}
+                  className="overflow-hidden rounded-2xl border border-line bg-[#fbf8f2]"
                 >
-                  Download
-                </button>
-              </div>
-            ))
+                  <button
+                    type="button"
+                    onClick={() => togglePlayerFolder(player.id)}
+                    className="flex w-full flex-wrap items-center justify-between gap-3 px-5 py-4 text-left"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span
+                        aria-hidden
+                        className={`inline-flex h-6 w-6 items-center justify-center rounded-full border border-line bg-white text-sm transition ${
+                          isOpen ? "rotate-90" : ""
+                        }`}
+                      >
+                        ›
+                      </span>
+                      <div>
+                        <p className="font-semibold text-foreground">
+                          {player.full_name || player.email || "Unnamed player"}
+                        </p>
+                        <p className="text-xs text-muted">
+                          {videos.length} videos · {docs.length} documents ·{" "}
+                          {essays.length} essays
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-xs font-semibold text-muted">
+                      {total} file{total === 1 ? "" : "s"}
+                    </span>
+                  </button>
+                  {isOpen ? (
+                    <div className="space-y-5 border-t border-line bg-white px-5 py-5">
+                      <section>
+                        <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">
+                          Media dump · {videos.length}
+                        </h3>
+                        {videos.length === 0 ? (
+                          <p className="mt-2 text-sm text-muted">No videos yet.</p>
+                        ) : (
+                          <div className="mt-3 grid gap-4 lg:grid-cols-2">
+                            {videos.map((file) => (
+                              <article
+                                key={file.path}
+                                className="overflow-hidden rounded-2xl border border-line bg-[#fbf8f2]"
+                              >
+                                <div className="aspect-video bg-[#d9d2c4]">
+                                  {file.signedUrl ? (
+                                    <video
+                                      controls
+                                      preload="metadata"
+                                      className="h-full w-full object-cover"
+                                      src={file.signedUrl}
+                                    >
+                                      Your browser does not support video playback.
+                                    </video>
+                                  ) : (
+                                    <div className="flex h-full items-center justify-center px-4 text-center text-sm text-muted">
+                                      Preview unavailable right now.
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="space-y-1 px-4 py-3">
+                                  <div className="flex items-start justify-between gap-3">
+                                    <p className="text-sm font-semibold">
+                                      {friendlyName(file.name)}
+                                    </p>
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        handleVideoDelete(file.path, file.name)
+                                      }
+                                      className="shrink-0 rounded-full border border-line px-3 py-1 text-[11px] font-semibold text-[#8f2b18] transition hover:border-[#8f2b18]"
+                                    >
+                                      Delete
+                                    </button>
+                                  </div>
+                                  <p className="text-xs text-muted">
+                                    {file.created_at
+                                      ? new Date(file.created_at).toLocaleString()
+                                      : "Recently uploaded"}
+                                  </p>
+                                </div>
+                              </article>
+                            ))}
+                          </div>
+                        )}
+                      </section>
+
+                      <section>
+                        <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">
+                          Documents · {docs.length}
+                        </h3>
+                        {docs.length === 0 ? (
+                          <p className="mt-2 text-sm text-muted">
+                            No documents yet.
+                          </p>
+                        ) : (
+                          <ul className="mt-3 space-y-2">
+                            {docs.map((file) => (
+                              <li
+                                key={file.path}
+                                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line px-4 py-3"
+                              >
+                                <p className="text-sm font-semibold">
+                                  {friendlyName(file.name)}
+                                </p>
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDocDownload(file.path)}
+                                    className="rounded-full border border-line px-3 py-1 text-xs font-semibold transition hover:border-foreground"
+                                  >
+                                    Download
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleDocDelete(file.path, file.name)
+                                    }
+                                    className="rounded-full border border-line px-3 py-1 text-xs font-semibold text-[#8f2b18] transition hover:border-[#8f2b18]"
+                                  >
+                                    Delete
+                                  </button>
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </section>
+
+                      <section>
+                        <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">
+                          Essays · {essays.length}
+                        </h3>
+                        {essays.length === 0 ? (
+                          <p className="mt-2 text-sm text-muted">No essays yet.</p>
+                        ) : (
+                          <ul className="mt-3 space-y-2">
+                            {essays.map((file) => (
+                              <li
+                                key={file.path}
+                                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line px-4 py-3"
+                              >
+                                <p className="text-sm font-semibold">
+                                  {friendlyName(file.name)}
+                                </p>
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleEssayDownload(file.path)}
+                                    className="rounded-full border border-line px-3 py-1 text-xs font-semibold transition hover:border-foreground"
+                                  >
+                                    Download
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleEssayDelete(file.path, file.name)
+                                    }
+                                    className="rounded-full border border-line px-3 py-1 text-xs font-semibold text-[#8f2b18] transition hover:border-[#8f2b18]"
+                                  >
+                                    Delete
+                                  </button>
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </section>
+                    </div>
+                  ) : null}
+                </article>
+              );
+            })
           )}
         </div>
       </div>

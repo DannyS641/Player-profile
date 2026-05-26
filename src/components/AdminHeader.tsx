@@ -12,8 +12,7 @@ const navItems = [
   { href: "#admin-players", label: "Players" },
   { href: "#admin-education-resources", label: "Education" },
   { href: "#admin-weekly-schedule", label: "Schedule" },
-  { href: "#admin-media-dump", label: "Media Dump" },
-  { href: "#admin-documents", label: "Documents" },
+  { href: "#admin-player-folders", label: "Player Files" },
 ];
 
 export default function AdminHeader() {

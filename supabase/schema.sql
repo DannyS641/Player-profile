@@ -319,7 +319,10 @@ create policy "Documents deletes by owner"
   on storage.objects for delete
   using (
     bucket_id = 'documents'
-    and auth.uid()::text = (storage.foldername(name))[1]
+    and (
+      auth.uid()::text = (storage.foldername(name))[1]
+      or public.is_admin()
+    )
   );
 
 drop policy if exists "Education uploads viewable by owner" on storage.objects;
@@ -360,7 +363,10 @@ create policy "Education uploads deletes by owner"
   on storage.objects for delete
   using (
     bucket_id = 'education'
-    and auth.uid()::text = (storage.foldername(name))[1]
+    and (
+      auth.uid()::text = (storage.foldername(name))[1]
+      or public.is_admin()
+    )
   );
 
 drop policy if exists "Media dump viewable by owner" on storage.objects;
@@ -401,5 +407,8 @@ create policy "Media dump deletes by owner"
   on storage.objects for delete
   using (
     bucket_id = 'media-dump'
-    and auth.uid()::text = (storage.foldername(name))[1]
+    and (
+      auth.uid()::text = (storage.foldername(name))[1]
+      or public.is_admin()
+    )
   );

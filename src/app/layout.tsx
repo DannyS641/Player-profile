@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Manrope, Space_Grotesk } from "next/font/google";
 import "./globals.css";
+import { ConfirmDialogProvider } from "@/components/ConfirmDialog";
+import { PromptDialogProvider } from "@/components/PromptDialog";
 
 const displayFont = Space_Grotesk({
   variable: "--font-display",
@@ -27,7 +29,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${displayFont.variable} ${bodyFont.variable} antialiased`}>
-        {children}
+        <ConfirmDialogProvider>
+          <PromptDialogProvider>{children}</PromptDialogProvider>
+        </ConfirmDialogProvider>
       </body>
     </html>
   );
