@@ -161,6 +161,25 @@ export default function AdminPage() {
     sort_order: 1,
   });
   const [savingSchedule, setSavingSchedule] = useState(false);
+  const [newPlayerForm, setNewPlayerForm] = useState({
+    full_name: "",
+    email: "",
+    password: "",
+  });
+  const [creatingPlayer, setCreatingPlayer] = useState(false);
+  const [createPlayerError, setCreatePlayerError] = useState<string | null>(null);
+  const [lastCreatedPlayer, setLastCreatedPlayer] = useState<{
+    id: string;
+    email: string;
+    full_name: string;
+    password: string;
+  } | null>(null);
+  const [credentialsCopied, setCredentialsCopied] = useState(false);
+  const [orphanEmail, setOrphanEmail] = useState("");
+  const [removingOrphan, setRemovingOrphan] = useState(false);
+  const [orphanResult, setOrphanResult] = useState<
+    { tone: "success" | "error"; text: string } | null
+  >(null);
   const confirm = useConfirm();
 
   useEffect(() => {
@@ -692,6 +711,229 @@ export default function AdminPage() {
     window.open(data.signedUrl, "_blank", "noopener,noreferrer");
   };
 
+  const generatePassword = () => {
+    const chars =
+      "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+    let result = "";
+    for (let i = 0; i < 12; i += 1) {
+      result += chars[Math.floor(Math.random() * chars.length)];
+    }
+    setNewPlayerForm((current) => ({ ...current, password: result }));
+  };
+
+  const handleCreatePlayer = async () => {
+    setCreatePlayerError(null);
+    const fullName = newPlayerForm.full_name.trim();
+    const email = newPlayerForm.email.trim().toLowerCase();
+    const password = newPlayerForm.password;
+
+    if (!fullName || !email || !password) {
+      setCreatePlayerError("Full name, email, and password are required.");
+      return;
+    }
+    if (password.length < 8) {
+      setCreatePlayerError("Password must be at least 8 characters.");
+      return;
+    }
+
+    setCreatingPlayer(true);
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    if (!token) {
+      setCreatingPlayer(false);
+      setCreatePlayerError("You need to be logged in as an admin.");
+      return;
+    }
+
+    const response = await fetch("/api/admin/create-player", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        email,
+        password,
+        full_name: fullName,
+      }),
+    });
+
+    const result = await response.json();
+    setCreatingPlayer(false);
+
+    if (!response.ok) {
+      setCreatePlayerError(result?.error || "Failed to create player.");
+      return;
+    }
+
+    setLastCreatedPlayer({
+      id: result.id,
+      email: result.email,
+      full_name: result.full_name,
+      password,
+    });
+    setCredentialsCopied(false);
+    setPlayers((current) => [
+      {
+        id: result.id,
+        email: result.email,
+        full_name: result.full_name,
+        position: "",
+        team: "Adrenale 5",
+        jersey_number: "",
+        height: "",
+        weight: "",
+        dominant_hand: "",
+        wingspan: "",
+        colleges_of_interest: "",
+        phone: "",
+        photo_url: "",
+        instagram_url: "",
+        tiktok_url: "",
+        bio: "",
+        status: "active",
+        role: "player",
+        updated_at: new Date().toISOString(),
+      },
+      ...current,
+    ]);
+    setNewPlayerForm({ full_name: "", email: "", password: "" });
+  };
+
+  const handleRemoveOrphanByEmail = async () => {
+    setOrphanResult(null);
+    const email = orphanEmail.trim().toLowerCase();
+    if (!email) {
+      setOrphanResult({ tone: "error", text: "Enter an email to remove." });
+      return;
+    }
+
+    const ok = await confirm({
+      title: `Remove ${email}?`,
+      description:
+        "This deletes the auth account, any profile row, and all files (videos, documents, essays) for this email. Use this for orphan accounts that don't appear in the Players table. This cannot be undone.",
+      confirmLabel: "Remove account",
+      tone: "destructive",
+    });
+    if (!ok) return;
+
+    setRemovingOrphan(true);
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    if (!token) {
+      setRemovingOrphan(false);
+      setOrphanResult({
+        tone: "error",
+        text: "You need to be logged in as an admin.",
+      });
+      return;
+    }
+
+    const response = await fetch("/api/admin/delete-player", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ email }),
+    });
+
+    const result = await response.json();
+    setRemovingOrphan(false);
+
+    if (!response.ok) {
+      setOrphanResult({
+        tone: "error",
+        text: result?.error || "Failed to remove account.",
+      });
+      return;
+    }
+
+    const deletedId = result.id as string | undefined;
+    if (deletedId) {
+      setPlayers((current) => current.filter((p) => p.id !== deletedId));
+      setMediaFiles((current) =>
+        current.filter((file) => file.userId !== deletedId),
+      );
+      setDocFiles((current) =>
+        current.filter((file) => file.userId !== deletedId),
+      );
+      setEssayFiles((current) =>
+        current.filter((file) => file.userId !== deletedId),
+      );
+    }
+
+    setOrphanEmail("");
+    setOrphanResult({
+      tone: "success",
+      text: `Removed ${email}.`,
+    });
+  };
+
+  const handleDeletePlayer = async (player: Player) => {
+    const ok = await confirm({
+      title: `Delete ${player.full_name || player.email || "this player"}?`,
+      description:
+        "This permanently removes their account, profile, and all uploaded files (videos, documents, essays). This cannot be undone.",
+      confirmLabel: "Delete player",
+      tone: "destructive",
+    });
+    if (!ok) return;
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    if (!token) {
+      setMessage("You need to be logged in as an admin.");
+      return;
+    }
+
+    const response = await fetch("/api/admin/delete-player", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ player_id: player.id }),
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+      setMessage(result?.error || "Failed to delete player.");
+      return;
+    }
+
+    setPlayers((current) => current.filter((p) => p.id !== player.id));
+    setMediaFiles((current) =>
+      current.filter((file) => file.userId !== player.id),
+    );
+    setDocFiles((current) =>
+      current.filter((file) => file.userId !== player.id),
+    );
+    setEssayFiles((current) =>
+      current.filter((file) => file.userId !== player.id),
+    );
+    setOpenPlayers((current) => {
+      const next = new Set(current);
+      next.delete(player.id);
+      return next;
+    });
+    setMessage(
+      `Deleted ${player.full_name || player.email || "player"}.`,
+    );
+  };
+
+  const copyCredentials = async () => {
+    if (!lastCreatedPlayer) return;
+    const text = `Email: ${lastCreatedPlayer.email}\nTemporary password: ${lastCreatedPlayer.password}`;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCredentialsCopied(true);
+      window.setTimeout(() => setCredentialsCopied(false), 2000);
+    } catch {
+      setCreatePlayerError("Couldn't access clipboard — copy manually.");
+    }
+  };
+
   const handleVideoDelete = async (path: string, name: string) => {
     const ok = await confirm({
       title: "Delete this video?",
@@ -1108,6 +1350,186 @@ export default function AdminPage() {
       </div>
 
       <div
+        id="admin-add-player"
+        className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8"
+      >
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="font-display text-2xl">Add a new player</h2>
+            <p className="text-sm text-muted">
+              Create the account without sending an email. Share the temporary
+              password with the player after.
+            </p>
+          </div>
+        </div>
+
+        {lastCreatedPlayer ? (
+          <div className="mt-6 rounded-2xl border border-line bg-[#f6fff1] p-5">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#1c5924]">
+                  Player created
+                </p>
+                <p className="mt-2 font-display text-lg text-foreground">
+                  {lastCreatedPlayer.full_name}
+                </p>
+                <p className="text-sm text-muted">
+                  {lastCreatedPlayer.email}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setLastCreatedPlayer(null);
+                  setCredentialsCopied(false);
+                }}
+                className="rounded-full border border-line bg-white px-4 py-2 text-xs font-semibold transition hover:border-foreground"
+              >
+                Add another
+              </button>
+            </div>
+            <div className="mt-4 rounded-2xl border border-line bg-white px-4 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">
+                Temporary password
+              </p>
+              <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+                <code className="break-all font-mono text-sm font-semibold text-foreground">
+                  {lastCreatedPlayer.password}
+                </code>
+                <button
+                  type="button"
+                  onClick={copyCredentials}
+                  className="rounded-full border border-line px-3 py-1 text-xs font-semibold transition hover:border-foreground"
+                >
+                  {credentialsCopied ? "Copied ✓" : "Copy email + password"}
+                </button>
+              </div>
+              <p className="mt-3 text-xs text-muted">
+                Share this with the player. They can change it later from
+                settings. The temp password is shown only once — copy it now.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-6 space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className="text-sm font-medium">
+                Full name
+                <input
+                  type="text"
+                  value={newPlayerForm.full_name}
+                  onChange={(event) =>
+                    setNewPlayerForm((current) => ({
+                      ...current,
+                      full_name: event.target.value,
+                    }))
+                  }
+                  placeholder="Godwin Ejembi"
+                  className="mt-2 w-full rounded-2xl border border-line px-4 py-2 text-sm outline-none focus:border-foreground"
+                />
+              </label>
+              <label className="text-sm font-medium">
+                Email
+                <input
+                  type="email"
+                  value={newPlayerForm.email}
+                  onChange={(event) =>
+                    setNewPlayerForm((current) => ({
+                      ...current,
+                      email: event.target.value,
+                    }))
+                  }
+                  placeholder="player@example.com"
+                  className="mt-2 w-full rounded-2xl border border-line px-4 py-2 text-sm outline-none focus:border-foreground"
+                />
+              </label>
+              <label className="text-sm font-medium md:col-span-2">
+                Temporary password
+                <div className="mt-2 flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={newPlayerForm.password}
+                    onChange={(event) =>
+                      setNewPlayerForm((current) => ({
+                        ...current,
+                        password: event.target.value,
+                      }))
+                    }
+                    placeholder="At least 8 characters"
+                    className="flex-1 rounded-2xl border border-line px-4 py-2 font-mono text-sm outline-none focus:border-foreground"
+                  />
+                  <button
+                    type="button"
+                    onClick={generatePassword}
+                    className="shrink-0 rounded-full border border-line px-4 py-2 text-xs font-semibold transition hover:border-foreground"
+                  >
+                    Generate
+                  </button>
+                </div>
+              </label>
+            </div>
+            {createPlayerError ? (
+              <p className="rounded-2xl border border-line bg-[#fff4f0] px-4 py-3 text-sm text-[#8f2b18]">
+                {createPlayerError}
+              </p>
+            ) : null}
+            <button
+              type="button"
+              onClick={handleCreatePlayer}
+              disabled={creatingPlayer}
+              className="rounded-full bg-foreground px-5 py-2 text-sm font-semibold text-background transition hover:bg-[#1e3347] disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {creatingPlayer ? "Creating..." : "Create player"}
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div
+        id="admin-remove-orphan"
+        className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8"
+      >
+        <div>
+          <h2 className="font-display text-2xl">Remove orphan account</h2>
+          <p className="text-sm text-muted">
+            Deletes an auth account by email — useful when the email exists in
+            Supabase but doesn&apos;t appear in the Players table.
+          </p>
+        </div>
+        <div className="mt-6 flex flex-wrap items-end gap-3">
+          <label className="flex-1 text-sm font-medium">
+            Email
+            <input
+              type="email"
+              value={orphanEmail}
+              onChange={(event) => setOrphanEmail(event.target.value)}
+              placeholder="player@example.com"
+              className="mt-2 w-full rounded-2xl border border-line px-4 py-2 text-sm outline-none focus:border-foreground"
+            />
+          </label>
+          <button
+            type="button"
+            onClick={handleRemoveOrphanByEmail}
+            disabled={removingOrphan}
+            className="rounded-full border border-[#8f2b18] px-5 py-2 text-sm font-semibold text-[#8f2b18] transition hover:bg-[#fff4f0] disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {removingOrphan ? "Removing..." : "Remove account"}
+          </button>
+        </div>
+        {orphanResult ? (
+          <p
+            className={
+              orphanResult.tone === "success"
+                ? "mt-4 rounded-2xl border border-line bg-[#f6fff1] px-4 py-3 text-sm text-[#1c5924]"
+                : "mt-4 rounded-2xl border border-line bg-[#fff4f0] px-4 py-3 text-sm text-[#8f2b18]"
+            }
+          >
+            {orphanResult.text}
+          </p>
+        ) : null}
+      </div>
+
+      <div
         id="admin-players"
         className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8"
       >
@@ -1218,11 +1640,20 @@ export default function AdminPage() {
                       })()}
                     </td>
                     <td className="px-4 py-4">
-                      <div className="text-xs text-muted">
-                        Updated{" "}
-                        {player.updated_at
-                          ? new Date(player.updated_at).toLocaleDateString()
-                          : "-"}
+                      <div className="flex flex-col items-start gap-2">
+                        <div className="text-xs text-muted">
+                          Updated{" "}
+                          {player.updated_at
+                            ? new Date(player.updated_at).toLocaleDateString()
+                            : "-"}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleDeletePlayer(player)}
+                          className="rounded-full border border-line px-3 py-1 text-[11px] font-semibold text-[#8f2b18] transition hover:border-[#8f2b18]"
+                        >
+                          Delete player
+                        </button>
                       </div>
                     </td>
                   </tr>

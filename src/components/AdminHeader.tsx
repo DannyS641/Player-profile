@@ -9,6 +9,7 @@ const navItems = [
   { href: "#admin-attendance-trend", label: "Attendance" },
   { href: "#admin-session-settings", label: "Session" },
   { href: "#admin-attendance-overrides", label: "Overrides" },
+  { href: "#admin-add-player", label: "Add player" },
   { href: "#admin-players", label: "Players" },
   { href: "#admin-education-resources", label: "Education" },
   { href: "#admin-weekly-schedule", label: "Schedule" },
