@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { buildUploadName, friendlyName } from "@/lib/files";
+import { buildUploadName, friendlyName, openInNewTab } from "@/lib/files";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { usePrompt } from "@/components/PromptDialog";
 
@@ -108,11 +108,11 @@ export default function DocumentsPage() {
     const { data, error } = await supabase.storage
       .from("documents")
       .createSignedUrl(path, 3600);
-    if (error) {
-      setMessage(error.message);
+    if (error || !data?.signedUrl) {
+      setMessage(error?.message ?? "Could not generate download link.");
       return;
     }
-    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+    openInNewTab(data.signedUrl);
   };
 
   const handleDelete = async (file: UploadItem) => {

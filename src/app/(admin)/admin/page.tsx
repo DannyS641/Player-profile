@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
-import { friendlyName } from "@/lib/files";
+import { friendlyName, openInNewTab } from "@/lib/files";
 import { useConfirm } from "@/components/ConfirmDialog";
 
 type Player = {
@@ -693,22 +693,22 @@ export default function AdminPage() {
     const { data, error } = await supabase.storage
       .from("documents")
       .createSignedUrl(path, 3600);
-    if (error) {
-      setMessage(error.message);
+    if (error || !data?.signedUrl) {
+      setMessage(error?.message ?? "Could not generate download link.");
       return;
     }
-    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+    openInNewTab(data.signedUrl);
   };
 
   const handleEssayDownload = async (path: string) => {
     const { data, error } = await supabase.storage
       .from("education")
       .createSignedUrl(path, 3600);
-    if (error) {
-      setMessage(error.message);
+    if (error || !data?.signedUrl) {
+      setMessage(error?.message ?? "Could not generate download link.");
       return;
     }
-    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+    openInNewTab(data.signedUrl);
   };
 
   const generatePassword = () => {

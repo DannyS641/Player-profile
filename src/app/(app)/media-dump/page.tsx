@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
-import { buildUploadName, friendlyName } from "@/lib/files";
+import { buildUploadName, friendlyName, looksLikeVideo } from "@/lib/files";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { usePrompt } from "@/components/PromptDialog";
 
@@ -14,12 +14,6 @@ type VideoUpload = {
   signedUrl: string | null;
 };
 
-const acceptedVideoTypes = [
-  "video/mp4",
-  "video/webm",
-  "video/quicktime",
-  "video/ogg",
-];
 const maxVideoSizeBytes = 1024 * 1024 * 1024;
 
 export default function MediaDumpPage() {
@@ -109,8 +103,10 @@ export default function MediaDumpPage() {
 
     if (!file) return;
 
-    if (!acceptedVideoTypes.includes(file.type)) {
-      setMessage("Upload an MP4, WebM, MOV, or OGG video file.");
+    if (!looksLikeVideo(file)) {
+      setMessage(
+        `That file doesn't look like a video (detected type "${file.type || "unknown"}"). Try MP4, MOV, WebM, or another video format.`,
+      );
       return;
     }
 
@@ -142,12 +138,19 @@ export default function MediaDumpPage() {
     const filename = buildUploadName(file, chosenName);
     const path = `${userId}/${filename}`;
 
+    const contentType = file.type || "application/octet-stream";
     const { error } = await supabase.storage
       .from("media-dump")
-      .upload(path, file, { upsert: false });
+      .upload(path, file, { upsert: false, contentType });
 
     if (error) {
-      setMessage(error.message);
+      console.error("[media-dump] upload failed", {
+        bucketError: error,
+        fileType: file.type,
+        fileName: file.name,
+        sizeBytes: file.size,
+      });
+      setMessage(`Upload failed: ${error.message}`);
       setUploading(false);
       return;
     }
@@ -227,7 +230,7 @@ export default function MediaDumpPage() {
           <div>
             <h2 className="font-display text-2xl">Your videos</h2>
             <p className="text-sm text-muted">
-              Supported formats: MP4, WebM, MOV, and OGG. Max size: 1024 MB.
+              Any video format. Max size: 1024 MB.
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -242,7 +245,7 @@ export default function MediaDumpPage() {
             <input
               ref={fileInputRef}
               type="file"
-              accept="video/mp4,video/webm,video/quicktime,video/ogg"
+              accept="video/*"
               onChange={handleUpload}
               className="hidden"
             />

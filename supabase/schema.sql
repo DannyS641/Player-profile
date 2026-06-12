@@ -107,9 +107,11 @@ values (
   'media-dump',
   false,
   1073741824,
-  array['video/mp4', 'video/webm', 'video/quicktime', 'video/ogg']
+  array['video/*']
 )
-on conflict (id) do nothing;
+on conflict (id) do update set
+  file_size_limit = excluded.file_size_limit,
+  allowed_mime_types = excluded.allowed_mime_types;
 
 -- Helper for admin checks
 create or replace function public.is_admin()
