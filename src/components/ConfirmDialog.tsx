@@ -101,7 +101,7 @@ export function ConfirmDialogProvider({
                 ref={cancelRef}
                 type="button"
                 onClick={() => resolveWith(false)}
-                className="rounded-full border border-line px-5 py-2 text-sm font-semibold transition hover:border-foreground"
+                className="min-h-[44px] rounded-full border border-line px-5 py-2 text-sm font-semibold transition hover:border-foreground"
               >
                 {pending.options.cancelLabel ?? "Cancel"}
               </button>
@@ -110,8 +110,8 @@ export function ConfirmDialogProvider({
                 onClick={() => resolveWith(true)}
                 className={
                   tone === "destructive"
-                    ? "rounded-full bg-[#8f2b18] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#6f2113]"
-                    : "rounded-full bg-foreground px-5 py-2 text-sm font-semibold text-background transition hover:bg-[#1e3347]"
+                    ? "min-h-[44px] rounded-full bg-[#8f2b18] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#6f2113]"
+                    : "min-h-[44px] rounded-full bg-foreground px-5 py-2 text-sm font-semibold text-background transition hover:bg-[#1e3347]"
                 }
               >
                 {pending.options.confirmLabel ?? "Confirm"}

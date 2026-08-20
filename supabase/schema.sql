@@ -30,8 +30,15 @@ create table if not exists app_settings (
   session_time time default '04:00:00',
   session_tz text default 'Africa/Lagos',
   min_minutes int default 10,
+  venue_lat double precision,
+  venue_lng double precision,
+  venue_radius_m int default 150,
   updated_at timestamptz default now()
 );
+
+alter table app_settings add column if not exists venue_lat double precision;
+alter table app_settings add column if not exists venue_lng double precision;
+alter table app_settings add column if not exists venue_radius_m int default 150;
 
 insert into app_settings (id)
 values (1)
@@ -89,8 +96,15 @@ create table if not exists attendance (
   session_date date not null,
   checked_in_at timestamptz default now(),
   method text default 'zoom_link',
+  checkin_lat double precision,
+  checkin_lng double precision,
+  checkin_accuracy_m double precision,
   unique (player_id, session_date)
 );
+
+alter table attendance add column if not exists checkin_lat double precision;
+alter table attendance add column if not exists checkin_lng double precision;
+alter table attendance add column if not exists checkin_accuracy_m double precision;
 
 alter table profiles enable row level security;
 alter table attendance enable row level security;

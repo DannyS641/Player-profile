@@ -43,14 +43,14 @@ export default function SchedulePage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8">
+      <div className="rounded-[28px] card-soft bg-white p-6 sm:p-8">
         <h1 className="font-display text-3xl">Weekly schedule</h1>
         <p className="mt-2 text-sm text-muted">
           Training and events for the week.
         </p>
       </div>
 
-      <div className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8">
+      <div className="rounded-[28px] card-soft bg-white p-6 sm:p-8">
         {schedule.length === 0 ? (
           <p className="text-sm text-muted">
             No schedule has been published yet.

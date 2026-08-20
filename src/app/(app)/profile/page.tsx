@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { Ruler, Weight, Hand, ArrowLeftRight, Phone } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+import { getCheckinLocation, distanceMeters } from "@/lib/checkinLocation";
 
 type ProfileForm = {
   full_name: string;
@@ -43,6 +45,11 @@ export default function ProfilePage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [zoomLink, setZoomLink] = useState<string | null>(null);
   const [minMinutes, setMinMinutes] = useState(10);
+  const [venue, setVenue] = useState<{
+    lat: number | null;
+    lng: number | null;
+    radiusM: number;
+  }>({ lat: null, lng: null, radiusM: 150 });
 
   useEffect(() => {
     let isMounted = true;
@@ -86,13 +93,18 @@ export default function ProfilePage() {
 
       const { data: settings } = await supabase
         .from("app_settings")
-        .select("zoom_link, min_minutes")
+        .select("zoom_link, min_minutes, venue_lat, venue_lng, venue_radius_m")
         .eq("id", 1)
         .single();
 
       if (isMounted) {
         setZoomLink(settings?.zoom_link ?? null);
         setMinMinutes(settings?.min_minutes ?? 10);
+        setVenue({
+          lat: settings?.venue_lat ?? null,
+          lng: settings?.venue_lng ?? null,
+          radiusM: settings?.venue_radius_m ?? 150,
+        });
       }
 
       if (isMounted) {
@@ -119,20 +131,40 @@ export default function ProfilePage() {
     }
 
     const today = new Date().toISOString().slice(0, 10);
-    const { error: checkInError } = await supabase
-      .from("attendance")
-      .upsert(
-        { player_id: userId, session_date: today, method: "self_checkin" },
-        { onConflict: "player_id,session_date", ignoreDuplicates: true },
-      );
+    const location = await getCheckinLocation();
+
+    const { error: checkInError } = await supabase.from("attendance").upsert(
+      {
+        player_id: userId,
+        session_date: today,
+        method: location ? "self_checkin" : "self_checkin_no_location",
+        checkin_lat: location?.lat ?? null,
+        checkin_lng: location?.lng ?? null,
+        checkin_accuracy_m: location?.accuracyM ?? null,
+      },
+      { onConflict: "player_id,session_date", ignoreDuplicates: true },
+    );
 
     if (checkInError) {
       setMessage(`Could not record check-in: ${checkInError.message}`);
       return;
     }
 
+    let locationNote = "";
+    if (location && venue.lat !== null && venue.lng !== null) {
+      const distance = Math.round(
+        distanceMeters(location.lat, location.lng, venue.lat, venue.lng),
+      );
+      locationNote =
+        distance <= venue.radiusM
+          ? ` Confirmed ${distance}m from venue.`
+          : ` You appear to be ${distance}m from venue — check-in recorded but flagged for review.`;
+    } else if (!location) {
+      locationNote = " Location wasn't available, so this check-in is unverified by location.";
+    }
+
     setMessage(
-      `Check-in recorded. Stay in Zoom at least ${minMinutes} minutes for verified attendance.`,
+      `Check-in recorded. Stay in Zoom at least ${minMinutes} minutes for verified attendance.${locationNote}`,
     );
     window.open(zoomLink, "_blank", "noopener,noreferrer");
   };
@@ -152,13 +184,28 @@ export default function ProfilePage() {
       : `https://${value}`;
   };
 
+  const completeness = useMemo(() => {
+    const fields = [
+      profile.photo_url,
+      profile.height,
+      profile.weight,
+      profile.dominant_hand,
+      profile.wingspan,
+      profile.phone,
+      profile.colleges_of_interest,
+      profile.instagram_url || profile.tiktok_url,
+    ];
+    const filled = fields.filter(Boolean).length;
+    return Math.round((filled / fields.length) * 100);
+  }, [profile]);
+
   if (loading) {
     return <p className="text-sm text-muted">Loading your profile...</p>;
   }
 
   if (!userId) {
     return (
-      <div className="rounded-[28px] border border-line bg-white p-8">
+      <div className="rounded-[28px] card-soft bg-white p-8">
         <h1 className="font-display text-2xl">Log in required</h1>
         <p className="mt-2 text-sm text-muted">
           Please log in to view your profile.
@@ -191,19 +238,49 @@ export default function ProfilePage() {
             </svg>
           </div>
           <div className="-mt-12 flex flex-col items-center px-6 pb-8 text-center">
-            <div className="relative z-10 flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-[#e9e1d6] shadow-lg">
-              {profile.photo_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={profile.photo_url}
-                  alt="Profile"
-                  className="h-full w-full object-cover object-center"
+            <div className="relative z-10 flex h-32 w-32 items-center justify-center">
+              <svg
+                className="absolute inset-0 h-full w-full -rotate-90"
+                viewBox="0 0 128 128"
+                aria-hidden="true"
+              >
+                <circle
+                  cx="64"
+                  cy="64"
+                  r="60"
+                  fill="none"
+                  stroke="#e6ddcf"
+                  strokeWidth="4"
                 />
-              ) : (
-                <span className="text-lg font-semibold text-muted">
-                  {getInitials(profile.full_name)}
-                </span>
-              )}
+                <circle
+                  cx="64"
+                  cy="64"
+                  r="60"
+                  fill="none"
+                  stroke="#f05d23"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                  strokeDasharray={2 * Math.PI * 60}
+                  strokeDashoffset={
+                    2 * Math.PI * 60 * (1 - completeness / 100)
+                  }
+                  className="transition-[stroke-dashoffset] duration-700 ease-out"
+                />
+              </svg>
+              <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-[#e9e1d6] shadow-lg">
+                {profile.photo_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={profile.photo_url}
+                    alt="Profile"
+                    className="h-full w-full object-cover object-center"
+                  />
+                ) : (
+                  <span className="text-lg font-semibold text-muted">
+                    {getInitials(profile.full_name)}
+                  </span>
+                )}
+              </div>
             </div>
             <h2 className="mt-4 font-display text-xl">
               {profile.full_name || "Player name"}
@@ -211,41 +288,45 @@ export default function ProfilePage() {
             <p className="text-xs uppercase tracking-[0.2em] text-muted">
               {profile.position || "Position"} · {profile.team}
             </p>
-            <div className="mt-4 grid w-full grid-cols-2 gap-3 text-left text-xs text-muted">
-              <div className="rounded-2xl border border-line bg-[#fbf8f2] px-3 py-2">
-                <p className="text-[10px] uppercase tracking-[0.2em]">Height</p>
-                <p className="mt-1 text-sm font-semibold text-foreground">
-                  {profile.height || "-"}
-                </p>
-              </div>
-              <div className="rounded-2xl border border-line bg-[#fbf8f2] px-3 py-2">
-                <p className="text-[10px] uppercase tracking-[0.2em]">Weight</p>
-                <p className="mt-1 text-sm font-semibold text-foreground">
-                  {profile.weight || "-"}
-                </p>
-              </div>
-              <div className="rounded-2xl border border-line bg-[#fbf8f2] px-3 py-2">
-                <p className="text-[10px] uppercase tracking-[0.2em]">
-                  Dominant hand
-                </p>
-                <p className="mt-1 text-sm font-semibold text-foreground">
-                  {profile.dominant_hand || "-"}
-                </p>
-              </div>
-              <div className="rounded-2xl border border-line bg-[#fbf8f2] px-3 py-2">
-                <p className="text-[10px] uppercase tracking-[0.2em]">
-                  Wingspan
-                </p>
-                <p className="mt-1 text-sm font-semibold text-foreground">
-                  {profile.wingspan || "-"}
-                </p>
-              </div>
-            </div>
-            <div className="mt-4 w-full rounded-2xl border border-line bg-[#fbf8f2] px-3 py-2 text-left text-xs text-muted">
-              <p className="text-[10px] uppercase tracking-[0.2em]">Phone</p>
-              <p className="mt-1 text-sm font-semibold text-foreground">
-                {profile.phone || "-"}
-              </p>
+            {completeness < 100 ? (
+              <Link
+                href="/settings"
+                className="mt-3 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5 text-[11px] font-semibold text-accent transition hover:bg-accent/15"
+              >
+                Complete your profile · {completeness}%
+              </Link>
+            ) : null}
+            <div className="mt-5 w-full space-y-2 text-left">
+              {[
+                { icon: Ruler, label: "Height", value: profile.height },
+                { icon: Weight, label: "Weight", value: profile.weight },
+                {
+                  icon: Hand,
+                  label: "Dominant hand",
+                  value: profile.dominant_hand,
+                },
+                {
+                  icon: ArrowLeftRight,
+                  label: "Wingspan",
+                  value: profile.wingspan,
+                },
+                { icon: Phone, label: "Phone", value: profile.phone },
+              ].map((row) => (
+                <div
+                  key={row.label}
+                  className="flex items-center gap-3 rounded-2xl bg-[#fbf8f2] px-4 py-3"
+                >
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-accent">
+                    <row.icon className="h-4 w-4" />
+                  </span>
+                  <span className="flex-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-muted">
+                    {row.label}
+                  </span>
+                  <span className="text-sm font-semibold text-foreground">
+                    {row.value || "—"}
+                  </span>
+                </div>
+              ))}
             </div>
             <p className="mt-4 text-xs text-muted">
               COLLEGE OF INTEREST:{" "}

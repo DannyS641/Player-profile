@@ -50,45 +50,44 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="mx-auto max-w-xl rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8">
-      <div className="space-y-2">
-        <h1 className="font-display text-3xl">Welcome back</h1>
-        <p className="text-sm text-muted">
-          Log in to update your profile and check in for training.
-        </p>
+    <div className="mx-auto flex max-w-sm flex-col items-center px-2 pb-10 pt-6 text-center">
+      <div className="flex h-16 w-16 items-center justify-center rounded-[22px] bg-accent font-display text-lg font-semibold text-white">
+        A5
       </div>
-      <form onSubmit={handleLogin} className="mt-8 space-y-5">
-        <label className="block text-sm font-medium">
-          Email
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            className="mt-2 w-full rounded-2xl border border-line bg-transparent px-4 py-3 text-sm outline-none transition focus:border-foreground"
-          />
-        </label>
-        <label className="block text-sm font-medium">
-          Password
-          <input
-            type="password"
-            required
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            className="mt-2 w-full rounded-2xl border border-line bg-transparent px-4 py-3 text-sm outline-none transition focus:border-foreground"
-          />
-        </label>
+      <h1 className="mt-6 font-display text-3xl tracking-tight text-foreground">
+        Log in
+      </h1>
+      <p className="mt-2 text-sm text-muted">
+        Update your profile and check in for training.
+      </p>
+      <form onSubmit={handleLogin} className="mt-8 w-full space-y-3 text-left">
+        <input
+          type="email"
+          required
+          placeholder="Email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          className="w-full rounded-2xl bg-[#efe8da] px-5 py-4 text-sm text-foreground outline-none transition placeholder:text-muted focus:bg-[#e6ddc9]"
+        />
+        <input
+          type="password"
+          required
+          placeholder="Password"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          className="w-full rounded-2xl bg-[#efe8da] px-5 py-4 text-sm text-foreground outline-none transition placeholder:text-muted focus:bg-[#e6ddc9]"
+        />
         {message ? (
-          <p className="rounded-2xl border border-line bg-[#fff4f0] px-4 py-3 text-sm text-[#8f2b18]">
+          <p className="rounded-2xl bg-[#fff4f0] px-4 py-3 text-sm text-[#8f2b18]">
             {message}
           </p>
         ) : null}
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-2xl bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-[#1e3347] disabled:cursor-not-allowed disabled:opacity-70"
+          className="w-full rounded-2xl bg-foreground px-4 py-4 text-sm font-semibold text-background transition hover:bg-[#1e3347] disabled:cursor-not-allowed disabled:opacity-70"
         >
-          {loading ? "Signing in..." : "Log in"}
+          {loading ? "Signing in..." : "Continue"}
         </button>
       </form>
       <p className="mt-6 text-sm text-muted">

@@ -32,6 +32,13 @@ html,
 body {
   width: 100%;
   overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+a,
+button {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .bg-app {
@@ -62,6 +69,23 @@ body {
 
 .font-display {
   font-family: var(--font-display), system-ui, sans-serif;
+}
+
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.card-soft {
+  border: 1px solid transparent;
+  box-shadow: 0 24px 60px -40px rgba(11, 27, 43, 0.35);
+}
+
+.card-tonal {
+  background: linear-gradient(160deg, rgba(240, 93, 35, 0.08) 0%, rgba(246, 241, 232, 0.4) 55%, #ffffff 100%);
 }
 
 .no-scrollbar::-webkit-scrollbar {
@@ -158,6 +182,29 @@ body {
   .animate-slide-right,
   .animate-slide-up,
   .animate-slide-down {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes page-enter-fade {
+  0% {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-page-enter {
+  animation: page-enter-fade 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-page-enter {
     animation: none;
     opacity: 1;
     transform: none;

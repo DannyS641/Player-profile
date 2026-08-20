@@ -136,13 +136,13 @@ export function PromptDialogProvider({
               <button
                 type="button"
                 onClick={() => resolveWith(null)}
-                className="rounded-full border border-line px-5 py-2 text-sm font-semibold transition hover:border-foreground"
+                className="min-h-[44px] rounded-full border border-line px-5 py-2 text-sm font-semibold transition hover:border-foreground"
               >
                 {pending.options.cancelLabel ?? "Cancel"}
               </button>
               <button
                 type="submit"
-                className="rounded-full bg-foreground px-5 py-2 text-sm font-semibold text-background transition hover:bg-[#1e3347]"
+                className="min-h-[44px] rounded-full bg-foreground px-5 py-2 text-sm font-semibold text-background transition hover:bg-[#1e3347]"
               >
                 {pending.options.confirmLabel ?? "OK"}
               </button>

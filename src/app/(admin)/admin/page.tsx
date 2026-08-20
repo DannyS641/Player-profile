@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { friendlyName, openInNewTab } from "@/lib/files";
+import { apiUrl } from "@/lib/apiBase";
+import { distanceMeters } from "@/lib/checkinLocation";
 import { useConfirm } from "@/components/ConfirmDialog";
 
 type Player = {
@@ -45,6 +47,16 @@ type OverrideRow = {
   session_date: string;
   status: string;
   reason: string;
+};
+
+type SelfCheckInRow = {
+  player_id: string;
+  session_date: string;
+  method: string | null;
+  checked_in_at: string;
+  checkin_lat: number | null;
+  checkin_lng: number | null;
+  checkin_accuracy_m: number | null;
 };
 
 type ResourceRow = {
@@ -122,6 +134,7 @@ export default function AdminPage() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [attendance, setAttendance] = useState<AttendanceRow[]>([]);
   const [overrides, setOverrides] = useState<OverrideRow[]>([]);
+  const [selfCheckIns, setSelfCheckIns] = useState<SelfCheckInRow[]>([]);
   const [resources, setResources] = useState<ResourceRow[]>([]);
   const [schedule, setSchedule] = useState<ScheduleRow[]>([]);
   const [docFiles, setDocFiles] = useState<{ path: string; name: string; userId: string }[]>([]);
@@ -136,6 +149,9 @@ export default function AdminPage() {
     session_time: "04:00:00",
     session_tz: "Africa/Lagos",
     min_minutes: 10,
+    venue_lat: null as number | null,
+    venue_lng: null as number | null,
+    venue_radius_m: 150,
   });
   const [savingSettings, setSavingSettings] = useState(false);
   const [overridePlayerId, setOverridePlayerId] = useState("");
@@ -224,7 +240,9 @@ export default function AdminPage() {
 
       const { data: settings } = await supabase
         .from("app_settings")
-        .select("zoom_link, meeting_id, session_time, session_tz, min_minutes")
+        .select(
+          "zoom_link, meeting_id, session_time, session_tz, min_minutes, venue_lat, venue_lng, venue_radius_m",
+        )
         .eq("id", 1)
         .single();
 
@@ -245,6 +263,14 @@ export default function AdminPage() {
         .select("player_id, session_date, status, reason")
         .order("session_date", { ascending: false })
         .limit(50);
+
+      const { data: selfCheckInData } = await supabase
+        .from("attendance")
+        .select(
+          "player_id, session_date, method, checked_in_at, checkin_lat, checkin_lng, checkin_accuracy_m",
+        )
+        .gte("session_date", startKey)
+        .order("session_date", { ascending: false });
 
       const { data: resourceData } = await supabase
         .from("education_resources")
@@ -316,6 +342,7 @@ export default function AdminPage() {
         setPlayers((playersData as Player[]) ?? []);
         setAttendance((attendanceEvents as AttendanceRow[]) ?? []);
         setOverrides((overrideData as OverrideRow[]) ?? []);
+        setSelfCheckIns((selfCheckInData as SelfCheckInRow[]) ?? []);
         setResources((resourceData as ResourceRow[]) ?? []);
         setSchedule((scheduleData as ScheduleRow[]) ?? []);
         setDocFiles(docResults);
@@ -333,6 +360,9 @@ export default function AdminPage() {
           session_time: settings?.session_time ?? "04:00:00",
           session_tz: settings?.session_tz ?? "Africa/Lagos",
           min_minutes: settings?.min_minutes ?? 10,
+          venue_lat: settings?.venue_lat ?? null,
+          venue_lng: settings?.venue_lng ?? null,
+          venue_radius_m: settings?.venue_radius_m ?? 150,
         });
         setLoading(false);
       }
@@ -469,6 +499,26 @@ export default function AdminPage() {
     return range;
   }, [attendance, overrides, sessionSettings.min_minutes]);
 
+  const selfCheckInsWithDistance = useMemo(() => {
+    const { venue_lat, venue_lng, venue_radius_m } = sessionSettings;
+    return selfCheckIns.map((row) => {
+      const distanceM =
+        row.checkin_lat !== null &&
+        row.checkin_lng !== null &&
+        venue_lat !== null &&
+        venue_lng !== null
+          ? Math.round(
+              distanceMeters(row.checkin_lat, row.checkin_lng, venue_lat, venue_lng),
+            )
+          : null;
+      return {
+        ...row,
+        distanceM,
+        flagged: distanceM !== null && distanceM > venue_radius_m,
+      };
+    });
+  }, [selfCheckIns, sessionSettings]);
+
   const stats = useMemo(() => {
     const total = players.length;
     const active = players.filter((player) => player.status === "active").length;
@@ -508,6 +558,9 @@ export default function AdminPage() {
         session_time: sessionSettings.session_time,
         session_tz: sessionSettings.session_tz,
         min_minutes: sessionSettings.min_minutes,
+        venue_lat: sessionSettings.venue_lat,
+        venue_lng: sessionSettings.venue_lng,
+        venue_radius_m: sessionSettings.venue_radius_m,
         updated_at: new Date().toISOString(),
       });
 
@@ -604,7 +657,7 @@ export default function AdminPage() {
       return;
     }
 
-    const response = await fetch("/api/title-fetcher", {
+    const response = await fetch(apiUrl("/api/title-fetcher"), {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -745,7 +798,7 @@ export default function AdminPage() {
       return;
     }
 
-    const response = await fetch("/api/admin/create-player", {
+    const response = await fetch(apiUrl("/api/admin/create-player"), {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -829,7 +882,7 @@ export default function AdminPage() {
       return;
     }
 
-    const response = await fetch("/api/admin/delete-player", {
+    const response = await fetch(apiUrl("/api/admin/delete-player"), {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -887,7 +940,7 @@ export default function AdminPage() {
       return;
     }
 
-    const response = await fetch("/api/admin/delete-player", {
+    const response = await fetch(apiUrl("/api/admin/delete-player"), {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -1253,7 +1306,59 @@ export default function AdminPage() {
               className="mt-2 w-full rounded-2xl border border-line px-4 py-2 text-sm outline-none focus:border-foreground"
             />
           </label>
+          <label className="text-sm font-medium">
+            Venue latitude
+            <input
+              type="number"
+              step="any"
+              value={sessionSettings.venue_lat ?? ""}
+              onChange={(event) =>
+                setSessionSettings((current) => ({
+                  ...current,
+                  venue_lat:
+                    event.target.value === "" ? null : Number(event.target.value),
+                }))
+              }
+              placeholder="e.g. 6.5244"
+              className="mt-2 w-full rounded-2xl border border-line px-4 py-2 text-sm outline-none focus:border-foreground"
+            />
+          </label>
+          <label className="text-sm font-medium">
+            Venue longitude
+            <input
+              type="number"
+              step="any"
+              value={sessionSettings.venue_lng ?? ""}
+              onChange={(event) =>
+                setSessionSettings((current) => ({
+                  ...current,
+                  venue_lng:
+                    event.target.value === "" ? null : Number(event.target.value),
+                }))
+              }
+              placeholder="e.g. 3.3792"
+              className="mt-2 w-full rounded-2xl border border-line px-4 py-2 text-sm outline-none focus:border-foreground"
+            />
+          </label>
+          <label className="text-sm font-medium">
+            Venue radius (meters)
+            <input
+              type="number"
+              min={1}
+              value={sessionSettings.venue_radius_m}
+              onChange={(event) =>
+                setSessionSettings((current) => ({
+                  ...current,
+                  venue_radius_m: Number(event.target.value),
+                }))
+              }
+              className="mt-2 w-full rounded-2xl border border-line px-4 py-2 text-sm outline-none focus:border-foreground"
+            />
+          </label>
         </div>
+        <p className="mt-4 text-xs text-muted">
+          Venue coordinates power the optional distance check on self check-in — used only to flag check-ins for review, never to block them or track location beyond that single moment.
+        </p>
         <button
           type="button"
           onClick={handleSettingsSave}
@@ -1347,6 +1452,70 @@ export default function AdminPage() {
             </ul>
           </div>
         ) : null}
+      </div>
+
+      <div
+        id="admin-self-checkins"
+        className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8"
+      >
+        <div>
+          <h2 className="font-display text-2xl">Self check-ins</h2>
+          <p className="text-sm text-muted">
+            Last 30 days. Distance is computed from the venue coordinates above, captured only at the moment of check-in.
+          </p>
+        </div>
+        <div className="mt-6 overflow-x-auto rounded-2xl border border-line">
+          <table className="min-w-full w-full text-left text-sm sm:min-w-[680px]">
+            <thead className="bg-[#f9f6f1] text-xs uppercase tracking-[0.2em] text-muted">
+              <tr>
+                <th className="px-4 py-3">Date</th>
+                <th className="px-4 py-3">Player</th>
+                <th className="px-4 py-3">Method</th>
+                <th className="px-4 py-3">Distance from venue</th>
+              </tr>
+            </thead>
+            <tbody>
+              {selfCheckInsWithDistance.length === 0 ? (
+                <tr>
+                  <td className="px-4 py-6 text-muted" colSpan={4}>
+                    No self check-ins yet.
+                  </td>
+                </tr>
+              ) : (
+                selfCheckInsWithDistance.map((row) => {
+                  const player = players.find((p) => p.id === row.player_id);
+                  return (
+                    <tr
+                      key={`${row.player_id}-${row.session_date}`}
+                      className="border-t border-line text-sm"
+                    >
+                      <td className="px-4 py-4">{row.session_date}</td>
+                      <td className="px-4 py-4">{player?.full_name ?? "Player"}</td>
+                      <td className="px-4 py-4 capitalize">
+                        {(row.method ?? "self_checkin").replaceAll("_", " ")}
+                      </td>
+                      <td className="px-4 py-4">
+                        {row.distanceM === null ? (
+                          <span className="text-muted">No location</span>
+                        ) : (
+                          <span
+                            className={
+                              row.flagged
+                                ? "font-semibold text-[#8f2b18]"
+                                : "text-[#1c5924]"
+                            }
+                          >
+                            {row.distanceM}m {row.flagged ? "(flagged)" : ""}
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div

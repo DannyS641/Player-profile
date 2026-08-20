@@ -10,7 +10,7 @@ export default function PageTransition({
   const pathname = usePathname();
 
   return (
-    <div key={pathname} className="opacity-0 animate-slide-up">
+    <div key={pathname} className="opacity-0 animate-page-enter">
       {children}
     </div>
   );

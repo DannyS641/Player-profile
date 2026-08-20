@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { LogOut } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 
 type ProfileInfo = {
@@ -121,6 +122,11 @@ export default function SettingsPage() {
 
     setPasswordMessage("Password updated.");
     setPassword("");
+  };
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    window.location.href = "/";
   };
 
   const handlePhotoUpload = async (
@@ -259,7 +265,7 @@ export default function SettingsPage() {
 
   if (!userId) {
     return (
-      <div className="rounded-[28px] border border-line bg-white p-8">
+      <div className="rounded-[28px] card-soft bg-white p-8">
         <h1 className="font-display text-2xl">Log in required</h1>
         <p className="mt-2 text-sm text-muted">
           Please log in to manage settings.
@@ -276,7 +282,7 @@ export default function SettingsPage() {
 
   return (
     <div className="mx-auto grid max-w-3xl gap-6">
-      <div className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8">
+      <div className="rounded-[28px] card-soft bg-white p-6 sm:p-8">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="font-display text-3xl">Settings</h1>
@@ -291,7 +297,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8">
+      <div className="rounded-[28px] card-soft bg-white p-6 sm:p-8">
         <h2 className="font-display text-xl">Profile details</h2>
         <p className="mt-2 text-sm text-muted">
           Update the details shown on your profile.
@@ -457,7 +463,7 @@ export default function SettingsPage() {
         </form>
       </div>
 
-      <div className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8">
+      <div className="rounded-[28px] card-soft bg-white p-6 sm:p-8">
         <h2 className="font-display text-xl">Profile photo</h2>
         <p className="mt-2 text-sm text-muted">
           Upload a clear headshot. PNG or JPG.
@@ -493,7 +499,7 @@ export default function SettingsPage() {
         ) : null}
       </div>
 
-      <div className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8">
+      <div className="rounded-[28px] card-soft bg-white p-6 sm:p-8">
         <h2 className="font-display text-xl">Social links</h2>
         <p className="mt-2 text-sm text-muted">
           Add your Instagram and TikTok URLs for your profile card.
@@ -544,7 +550,7 @@ export default function SettingsPage() {
         </form>
       </div>
 
-      <div className="rounded-[28px] border border-line bg-white p-8 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)]">
+      <div className="rounded-[28px] card-soft bg-white p-8">
         <h2 className="font-display text-xl">Password</h2>
         <form onSubmit={handlePasswordUpdate} className="mt-6 space-y-4">
           <label className="block text-sm font-medium">
@@ -570,6 +576,21 @@ export default function SettingsPage() {
             {savingPassword ? "Updating..." : "Update password"}
           </button>
         </form>
+      </div>
+
+      <div className="rounded-[28px] card-soft bg-white p-8">
+        <h2 className="font-display text-xl">Account</h2>
+        <p className="mt-2 text-sm text-muted">
+          {userEmail ? `Signed in as ${userEmail}` : "Signed in"}
+        </p>
+        <button
+          type="button"
+          onClick={handleSignOut}
+          className="mt-6 flex items-center gap-2 rounded-2xl border border-line px-4 py-3 text-sm font-semibold text-[#8f2b18] transition hover:border-[#8f2b18]"
+        >
+          <LogOut className="h-4 w-4" />
+          Sign out
+        </button>
       </div>
     </div>
   );

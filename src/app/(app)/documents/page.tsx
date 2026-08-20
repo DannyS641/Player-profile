@@ -139,14 +139,14 @@ export default function DocumentsPage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8">
+      <div className="rounded-[28px] card-soft bg-white p-6 sm:p-8">
         <h1 className="font-display text-3xl">Documents</h1>
         <p className="mt-2 text-sm text-muted">
           Upload transcripts, certificates, and supporting documents.
         </p>
       </div>
 
-      <section className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8">
+      <section className="rounded-[28px] card-soft bg-white p-6 sm:p-8">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 className="font-display text-2xl">Your uploads</h2>

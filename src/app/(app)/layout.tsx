@@ -1,4 +1,5 @@
 import AppHeader from "@/components/AppHeader";
+import BottomNav from "@/components/BottomNav";
 import PageTransition from "@/components/PageTransition";
 
 export default function AppLayout({
@@ -7,11 +8,14 @@ export default function AppLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="min-h-[100svh] overflow-x-hidden bg-app">
-      <AppHeader />
-      <main className="mx-auto w-full max-w-6xl px-6 pb-16 pt-8 sm:pt-12">
+    <div className="safe-top min-h-[100svh] bg-app">
+      <div className="mx-auto w-full max-w-6xl px-4 pt-4 sm:px-6 sm:pt-6">
+        <AppHeader />
+      </div>
+      <main className="mx-auto w-full max-w-6xl px-4 pb-28 pt-6 sm:px-6 sm:pb-16 sm:pt-12">
         <PageTransition>{children}</PageTransition>
       </main>
+      <BottomNav />
     </div>
   );
 }

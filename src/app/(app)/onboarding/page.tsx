@@ -150,7 +150,7 @@ export default function OnboardingPage() {
 
   if (!userId) {
     return (
-      <div className="rounded-[28px] border border-line bg-white p-8">
+      <div className="rounded-[28px] card-soft bg-white p-8">
         <h1 className="font-display text-2xl">Log in required</h1>
         <p className="mt-2 text-sm text-muted">
           Please log in to complete your player profile.
@@ -166,7 +166,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8">
+    <div className="mx-auto max-w-3xl rounded-[28px] card-soft bg-white p-6 sm:p-8">
       <div className="space-y-2">
         <h1 className="font-display text-3xl">Set up your profile</h1>
         <p className="text-sm text-muted">

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Players Profile</string>
+    <string name="title_activity_main">Players Profile</string>
+    <string name="package_name">com.adrenale5.playersprofile</string>
+    <string name="custom_url_scheme">com.adrenale5.playersprofile</string>
+</resources>

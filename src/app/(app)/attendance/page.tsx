@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { Flame, TrendingUp } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 
 type AttendanceRow = {
@@ -151,13 +152,31 @@ export default function AttendancePage() {
     };
   }, []);
 
+  const streak = useMemo(() => {
+    let count = 0;
+    for (const row of rows) {
+      if (row.status === "present") {
+        count += 1;
+      } else {
+        break;
+      }
+    }
+    return count;
+  }, [rows]);
+
+  const attendanceRate = useMemo(() => {
+    if (rows.length === 0) return 0;
+    const present = rows.filter((row) => row.status === "present").length;
+    return Math.round((present / rows.length) * 100);
+  }, [rows]);
+
   if (loading) {
     return <p className="text-sm text-muted">Loading attendance...</p>;
   }
 
   if (!userId) {
     return (
-      <div className="rounded-[28px] border border-line bg-white p-8">
+      <div className="rounded-[28px] card-soft bg-white p-8">
         <h1 className="font-display text-2xl">Log in required</h1>
         <p className="mt-2 text-sm text-muted">
           Please log in to view attendance.
@@ -173,22 +192,48 @@ export default function AttendancePage() {
   }
 
   return (
-    <div className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8">
-      <div className="flex items-center justify-between">
-      <div>
-        <h1 className="font-display text-3xl">Attendance</h1>
-        <p className="text-sm text-muted">
-          Verified attendance based on Zoom (min {minMinutes} mins).
-        </p>
+    <div className="space-y-6">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="card-soft card-tonal rounded-[28px] p-6">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-muted">
+            <Flame className="h-4 w-4 text-accent" />
+            Current streak
+          </div>
+          <p className="mt-3 font-display text-6xl tracking-tight text-foreground">
+            {streak}
+          </p>
+          <p className="mt-1 text-sm text-muted">
+            {streak === 1 ? "session in a row" : "sessions in a row"}
+          </p>
+        </div>
+        <div className="card-soft card-tonal rounded-[28px] p-6">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-muted">
+            <TrendingUp className="h-4 w-4 text-accent" />
+            Attendance rate
+          </div>
+          <p className="mt-3 font-display text-6xl tracking-tight text-foreground">
+            {attendanceRate}%
+          </p>
+          <p className="mt-1 text-sm text-muted">across all recorded sessions</p>
+        </div>
       </div>
-        <Link
-          href="/profile"
-          className="rounded-full border border-line px-4 py-2 text-xs font-semibold transition hover:border-foreground"
-        >
-          Back to profile
-        </Link>
-      </div>
-      <div className="mt-6 overflow-x-auto rounded-2xl border border-line">
+
+      <div className="card-soft rounded-[28px] bg-white p-6 sm:p-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="font-display text-3xl">Attendance</h1>
+            <p className="text-sm text-muted">
+              Verified attendance based on Zoom (min {minMinutes} mins).
+            </p>
+          </div>
+          <Link
+            href="/profile"
+            className="rounded-full border border-line px-4 py-2 text-xs font-semibold transition hover:border-foreground"
+          >
+            Back to profile
+          </Link>
+        </div>
+        <div className="mt-6 overflow-x-auto rounded-2xl border border-line">
         <table className="min-w-full w-full text-left text-sm sm:min-w-[680px]">
           <thead className="bg-[#f9f6f1] text-xs uppercase tracking-[0.2em] text-muted">
             <tr>
@@ -236,6 +281,7 @@ export default function AttendancePage() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

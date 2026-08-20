@@ -157,7 +157,7 @@ export default function EducationPage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8">
+      <div className="rounded-[28px] card-soft bg-white p-6 sm:p-8">
         <h1 className="font-display text-3xl">Education</h1>
         <p className="mt-2 text-sm text-muted">
           Film study, YouTube breakdowns, and essay submissions.
@@ -165,7 +165,7 @@ export default function EducationPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <section className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8">
+        <section className="rounded-[28px] card-soft bg-white p-6 sm:p-8">
           <h2 className="font-display text-2xl">Film study videos</h2>
           <div className="mt-4 space-y-4">
             {films.length === 0 ? (
@@ -189,7 +189,7 @@ export default function EducationPage() {
           </div>
         </section>
 
-        <section className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8">
+        <section className="rounded-[28px] card-soft bg-white p-6 sm:p-8">
           <h2 className="font-display text-2xl">YouTube videos</h2>
           <div className="mt-4 space-y-4">
             {youtubes.length === 0 ? (
@@ -214,7 +214,7 @@ export default function EducationPage() {
         </section>
       </div>
 
-      <section className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8">
+      <section className="rounded-[28px] card-soft bg-white p-6 sm:p-8">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 className="font-display text-2xl">Essay submissions</h2>

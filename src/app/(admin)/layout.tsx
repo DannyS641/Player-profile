@@ -7,7 +7,7 @@ export default function AdminLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="min-h-[100svh] overflow-x-hidden bg-app">
+    <div className="safe-top min-h-[100svh] bg-app">
       <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-6 sm:pt-6">
         <AdminHeader />
       </div>
