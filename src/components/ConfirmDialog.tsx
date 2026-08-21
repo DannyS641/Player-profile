@@ -82,7 +82,7 @@ export function ConfirmDialogProvider({
             type="button"
             aria-label="Dismiss dialog"
             onClick={() => resolveWith(false)}
-            className="absolute inset-0 bg-[#0b1b2b]/55 backdrop-blur-sm"
+            className="absolute inset-0 bg-[#0d271b]/55 backdrop-blur-sm"
           />
           <div className="relative w-full max-w-md rounded-[28px] border border-line bg-white p-6 shadow-[0_30px_80px_-40px_rgba(11,27,43,0.55)] sm:p-8">
             <h2
@@ -111,7 +111,7 @@ export function ConfirmDialogProvider({
                 className={
                   tone === "destructive"
                     ? "min-h-[44px] rounded-full bg-[#8f2b18] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#6f2113]"
-                    : "min-h-[44px] rounded-full bg-foreground px-5 py-2 text-sm font-semibold text-background transition hover:bg-[#1e3347]"
+                    : "min-h-[44px] rounded-full bg-foreground px-5 py-2 text-sm font-semibold text-background transition hover:bg-[#08150e]"
                 }
               >
                 {pending.options.confirmLabel ?? "Confirm"}

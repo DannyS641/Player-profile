@@ -97,7 +97,7 @@ export function PromptDialogProvider({
             type="button"
             aria-label="Dismiss dialog"
             onClick={() => resolveWith(null)}
-            className="absolute inset-0 bg-[#0b1b2b]/55 backdrop-blur-sm"
+            className="absolute inset-0 bg-[#0d271b]/55 backdrop-blur-sm"
           />
           <form
             onSubmit={handleSubmit}
@@ -142,7 +142,7 @@ export function PromptDialogProvider({
               </button>
               <button
                 type="submit"
-                className="min-h-[44px] rounded-full bg-foreground px-5 py-2 text-sm font-semibold text-background transition hover:bg-[#1e3347]"
+                className="min-h-[44px] rounded-full bg-foreground px-5 py-2 text-sm font-semibold text-background transition hover:bg-[#08150e]"
               >
                 {pending.options.confirmLabel ?? "OK"}
               </button>

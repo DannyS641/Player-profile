@@ -33,22 +33,26 @@ export default function AppHeader() {
   }, []);
 
   return (
-    <header className="card-soft mx-auto w-full max-w-6xl rounded-[28px] bg-[#f6f1e8] px-5 py-4 sm:px-6 sm:py-5">
+    <header className="card-soft mx-auto w-full max-w-6xl rounded-[28px] bg-white px-5 py-4 sm:px-6 sm:py-5">
       <div className="flex items-center justify-between gap-3 md:hidden">
         <Link
           href="/profile"
-          className="font-display text-lg tracking-tight text-foreground whitespace-nowrap"
+          className="flex items-center gap-2 font-display text-lg tracking-tight text-foreground whitespace-nowrap"
         >
-          ADRENALE 5
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="A5" className="h-8 w-8" />
+          A5
         </Link>
       </div>
 
       <div className="hidden items-center gap-6 md:flex">
         <Link
           href="/profile"
-          className="font-display text-lg tracking-tight text-foreground whitespace-nowrap"
+          className="flex items-center gap-2 font-display text-lg tracking-tight text-foreground whitespace-nowrap"
         >
-          ADRENALE 5
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="A5" className="h-8 w-8" />
+          A5
         </Link>
         <nav className="flex flex-1 items-center justify-evenly text-xs font-semibold text-foreground/80">
           <Link

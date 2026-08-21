@@ -80,7 +80,7 @@ export default function BottomNav() {
                   key={item.href}
                   href={item.href}
                   onClick={() => setMoreOpen(false)}
-                  className="flex min-h-[44px] items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold text-foreground transition hover:bg-[#f6f1e8]"
+                  className="flex min-h-[44px] items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold text-foreground transition hover:bg-[#eef3f0]"
                 >
                   <Icon className="h-5 w-5 text-muted" />
                   {item.label}
@@ -91,7 +91,7 @@ export default function BottomNav() {
               <Link
                 href="/admin"
                 onClick={() => setMoreOpen(false)}
-                className="flex min-h-[44px] items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold text-foreground transition hover:bg-[#f6f1e8]"
+                className="flex min-h-[44px] items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold text-foreground transition hover:bg-[#eef3f0]"
               >
                 <ShieldCheck className="h-5 w-5 text-muted" />
                 Admin

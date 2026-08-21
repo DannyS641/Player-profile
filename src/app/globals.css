@@ -1,13 +1,13 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #f6f1e8;
-  --ink: #0b1b2b;
-  --muted: #5a6676;
-  --accent: #f05d23;
-  --accent-2: #a3ff12;
+  --bg: #ffffff;
+  --ink: #0d271b;
+  --muted: #5c6b63;
+  --accent: #0d271b;
+  --accent-2: #16341f;
   --card: #ffffff;
-  --line: #e6ddcf;
+  --line: #dbe4de;
 }
 
 @theme inline {
@@ -28,6 +28,13 @@ body {
   font-family: var(--font-body), system-ui, sans-serif;
 }
 
+/* iOS auto-zooms on focus for any input under 16px and doesn't reliably zoom back out; forcing 16px here stops it at the source instead of disabling pinch-zoom app-wide. */
+input,
+select,
+textarea {
+  font-size: 16px !important;
+}
+
 html,
 body {
   width: 100%;
@@ -43,28 +50,12 @@ button {
 
 .bg-app {
   background-repeat: no-repeat;
-  background-size: 115%;
   background-position: top center;
-  background-image: linear-gradient(
-      180deg,
-      rgba(246, 241, 232, 0.45) 0%,
-      rgba(255, 255, 255, 0.55) 45%,
-      rgba(243, 239, 229, 0.6) 100%
-    ),
-    url("/app-background.jpg");
-}
-
-@media (max-width: 640px) {
-  .bg-app {
-    background-size: 125%;
-    background-image: linear-gradient(
-        180deg,
-        rgba(246, 241, 232, 0.55) 0%,
-        rgba(255, 255, 255, 0.65) 45%,
-        rgba(243, 239, 229, 0.7) 100%
-      ),
-      url("/app-background-mobile.jpg");
-  }
+  background-image: radial-gradient(
+    ellipse 1200px 600px at 50% -10%,
+    rgba(13, 39, 27, 0.06) 0%,
+    rgba(255, 255, 255, 0) 70%
+  );
 }
 
 .font-display {
@@ -85,7 +76,7 @@ button {
 }
 
 .card-tonal {
-  background: linear-gradient(160deg, rgba(240, 93, 35, 0.08) 0%, rgba(246, 241, 232, 0.4) 55%, #ffffff 100%);
+  background: linear-gradient(160deg, rgba(13, 39, 27, 0.08) 0%, rgba(244, 248, 246, 0.6) 55%, #ffffff 100%);
 }
 
 .no-scrollbar::-webkit-scrollbar {

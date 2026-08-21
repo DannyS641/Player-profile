@@ -18,7 +18,7 @@ const bodyFont = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: "Players Profile",
+  title: "A5",
   description: "Player profile, attendance, and training access.",
 };
 
@@ -26,7 +26,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#f6f1e8",
+  themeColor: "#ffffff",
 };
 
 export default function RootLayout({

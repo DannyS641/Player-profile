@@ -37,7 +37,7 @@ export default function SettingsPage() {
   const [profile, setProfile] = useState<ProfileInfo>({
     full_name: "",
     position: "",
-    team: "Adrenale 5",
+    team: "A5",
     jersey_number: "",
     height: "",
     weight: "",
@@ -79,7 +79,7 @@ export default function SettingsPage() {
         setProfile({
           full_name: data.full_name ?? "",
           position: data.position ?? "",
-          team: data.team ?? "Adrenale 5",
+          team: data.team ?? "A5",
           jersey_number: data.jersey_number ?? "",
           height: data.height ?? "",
           weight: data.weight ?? "",
@@ -456,7 +456,7 @@ export default function SettingsPage() {
           <button
             type="submit"
             disabled={savingProfile}
-            className="rounded-2xl bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-[#1e3347] disabled:cursor-not-allowed disabled:opacity-70 md:col-span-2"
+            className="rounded-2xl bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-[#08150e] disabled:cursor-not-allowed disabled:opacity-70 md:col-span-2"
           >
             {savingProfile ? "Saving..." : "Save profile"}
           </button>
@@ -468,8 +468,8 @@ export default function SettingsPage() {
         <p className="mt-2 text-sm text-muted">
           Upload a clear headshot. PNG or JPG.
         </p>
-        <div className="mt-6 flex flex-wrap items-center gap-4 rounded-2xl border border-line bg-[#fbf8f2] p-4">
-          <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-[#e9e1d6] text-lg font-semibold text-muted">
+        <div className="mt-6 flex flex-wrap items-center gap-4 rounded-2xl border border-line bg-[#eef3f0] p-4">
+          <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-[#e3ece6] text-lg font-semibold text-muted">
             {profile.photo_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -543,7 +543,7 @@ export default function SettingsPage() {
           <button
             type="submit"
             disabled={savingSocials}
-            className="rounded-2xl bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-[#1e3347] disabled:cursor-not-allowed disabled:opacity-70"
+            className="rounded-2xl bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-[#08150e] disabled:cursor-not-allowed disabled:opacity-70"
           >
             {savingSocials ? "Saving..." : "Save social links"}
           </button>
@@ -571,7 +571,7 @@ export default function SettingsPage() {
           <button
             type="submit"
             disabled={savingPassword}
-            className="rounded-2xl bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-[#1e3347] disabled:cursor-not-allowed disabled:opacity-70"
+            className="rounded-2xl bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-[#08150e] disabled:cursor-not-allowed disabled:opacity-70"
           >
             {savingPassword ? "Updating..." : "Update password"}
           </button>

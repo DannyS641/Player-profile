@@ -238,7 +238,7 @@ export default function MediaDumpPage() {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="rounded-full bg-accent px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#d84f1d] disabled:cursor-not-allowed disabled:opacity-70"
+              className="rounded-full bg-accent px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#08150e] disabled:cursor-not-allowed disabled:opacity-70"
             >
               {uploading ? "Uploading..." : "Upload video"}
             </button>
@@ -265,9 +265,9 @@ export default function MediaDumpPage() {
             uploads.map((file) => (
               <article
                 key={file.path}
-                className="overflow-hidden rounded-[26px] border border-line bg-[#fbf8f2]"
+                className="overflow-hidden rounded-[26px] border border-line bg-[#eef3f0]"
               >
-                <div className="aspect-video bg-[#d9d2c4]">
+                <div className="aspect-video bg-[#e3ece6]">
                   {file.signedUrl ? (
                     <video
                       controls

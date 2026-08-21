@@ -227,7 +227,7 @@ export default function EducationPage() {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="rounded-full bg-foreground px-5 py-2 text-sm font-semibold text-background transition hover:bg-[#1e3347] disabled:cursor-not-allowed disabled:opacity-70"
+              className="rounded-full bg-foreground px-5 py-2 text-sm font-semibold text-background transition hover:bg-[#08150e] disabled:cursor-not-allowed disabled:opacity-70"
             >
               {uploading ? "Uploading..." : "Upload essay"}
             </button>

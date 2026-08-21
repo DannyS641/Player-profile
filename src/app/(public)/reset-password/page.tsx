@@ -100,7 +100,7 @@ export default function ResetPasswordPage() {
               message.type === "success"
                 ? "rounded-2xl border border-line bg-[#f6fff1] px-4 py-3 text-sm text-[#1c5924]"
                 : message.type === "info"
-                  ? "rounded-2xl border border-line bg-[#fbf8f2] px-4 py-3 text-sm text-[#7a5b1f]"
+                  ? "rounded-2xl border border-line bg-[#eef3f0] px-4 py-3 text-sm text-[#7a5b1f]"
                   : "rounded-2xl border border-line bg-[#fff4f0] px-4 py-3 text-sm text-[#8f2b18]"
             }
           >
@@ -110,7 +110,7 @@ export default function ResetPasswordPage() {
         <button
           type="submit"
           disabled={loading || checking}
-          className="w-full rounded-2xl bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-[#1e3347] disabled:cursor-not-allowed disabled:opacity-70"
+          className="w-full rounded-2xl bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-[#08150e] disabled:cursor-not-allowed disabled:opacity-70"
         >
           {loading ? "Updating..." : "Update password"}
         </button>

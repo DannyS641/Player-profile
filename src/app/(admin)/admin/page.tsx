@@ -832,7 +832,7 @@ export default function AdminPage() {
         email: result.email,
         full_name: result.full_name,
         position: "",
-        team: "Adrenale 5",
+        team: "A5",
         jersey_number: "",
         height: "",
         weight: "",
@@ -1154,7 +1154,7 @@ export default function AdminPage() {
           ].map((card) => (
             <div
               key={card.label}
-              className="rounded-2xl border border-line bg-[#fbf8f2] p-4"
+              className="rounded-2xl border border-line bg-[#eef3f0] p-4"
             >
               <p className="text-xs uppercase tracking-[0.2em] text-muted">
                 {card.label}
@@ -1363,7 +1363,7 @@ export default function AdminPage() {
           type="button"
           onClick={handleSettingsSave}
           disabled={savingSettings}
-          className="mt-6 rounded-full bg-foreground px-4 py-2 text-sm font-semibold text-background transition hover:bg-[#1e3347] disabled:cursor-not-allowed disabled:opacity-70"
+          className="mt-6 rounded-full bg-foreground px-4 py-2 text-sm font-semibold text-background transition hover:bg-[#08150e] disabled:cursor-not-allowed disabled:opacity-70"
         >
           {savingSettings ? "Saving..." : "Save session settings"}
         </button>
@@ -1432,12 +1432,12 @@ export default function AdminPage() {
           type="button"
           onClick={handleOverrideSave}
           disabled={savingOverride}
-          className="mt-6 rounded-full bg-foreground px-4 py-2 text-sm font-semibold text-background transition hover:bg-[#1e3347] disabled:cursor-not-allowed disabled:opacity-70"
+          className="mt-6 rounded-full bg-foreground px-4 py-2 text-sm font-semibold text-background transition hover:bg-[#08150e] disabled:cursor-not-allowed disabled:opacity-70"
         >
           {savingOverride ? "Saving..." : "Save override"}
         </button>
         {overrides.length > 0 ? (
-          <div className="mt-6 rounded-2xl border border-line bg-[#fbf8f2] p-4 text-xs text-muted">
+          <div className="mt-6 rounded-2xl border border-line bg-[#eef3f0] p-4 text-xs text-muted">
             <p className="font-semibold text-foreground">Recent overrides</p>
             <ul className="mt-2 space-y-1">
               {overrides.slice(0, 5).map((item) => {
@@ -1466,7 +1466,7 @@ export default function AdminPage() {
         </div>
         <div className="mt-6 overflow-x-auto rounded-2xl border border-line">
           <table className="min-w-full w-full text-left text-sm sm:min-w-[680px]">
-            <thead className="bg-[#f9f6f1] text-xs uppercase tracking-[0.2em] text-muted">
+            <thead className="bg-[#f4f8f6] text-xs uppercase tracking-[0.2em] text-muted">
               <tr>
                 <th className="px-4 py-3">Date</th>
                 <th className="px-4 py-3">Player</th>
@@ -1646,7 +1646,7 @@ export default function AdminPage() {
               type="button"
               onClick={handleCreatePlayer}
               disabled={creatingPlayer}
-              className="rounded-full bg-foreground px-5 py-2 text-sm font-semibold text-background transition hover:bg-[#1e3347] disabled:cursor-not-allowed disabled:opacity-70"
+              className="rounded-full bg-foreground px-5 py-2 text-sm font-semibold text-background transition hover:bg-[#08150e] disabled:cursor-not-allowed disabled:opacity-70"
             >
               {creatingPlayer ? "Creating..." : "Create player"}
             </button>
@@ -1719,7 +1719,7 @@ export default function AdminPage() {
         </div>
         <div className="mt-6 overflow-x-auto rounded-2xl border border-line">
           <table className="min-w-full w-full text-left text-sm sm:min-w-[1280px]">
-            <thead className="bg-[#f9f6f1] text-xs uppercase tracking-[0.2em] text-muted">
+            <thead className="bg-[#f4f8f6] text-xs uppercase tracking-[0.2em] text-muted">
               <tr>
                 <th className="px-4 py-3">Player</th>
                 <th className="px-4 py-3">Email</th>
@@ -1919,7 +1919,7 @@ export default function AdminPage() {
           type="button"
           onClick={handleResourceSave}
           disabled={savingResource}
-          className="mt-5 rounded-full bg-foreground px-4 py-2 text-sm font-semibold text-background transition hover:bg-[#1e3347] disabled:cursor-not-allowed disabled:opacity-70"
+          className="mt-5 rounded-full bg-foreground px-4 py-2 text-sm font-semibold text-background transition hover:bg-[#08150e] disabled:cursor-not-allowed disabled:opacity-70"
         >
           {savingResource ? "Saving..." : "Add resource"}
         </button>
@@ -2078,7 +2078,7 @@ export default function AdminPage() {
           type="button"
           onClick={handleScheduleSave}
           disabled={savingSchedule}
-          className="mt-5 rounded-full bg-foreground px-4 py-2 text-sm font-semibold text-background transition hover:bg-[#1e3347] disabled:cursor-not-allowed disabled:opacity-70"
+          className="mt-5 rounded-full bg-foreground px-4 py-2 text-sm font-semibold text-background transition hover:bg-[#08150e] disabled:cursor-not-allowed disabled:opacity-70"
         >
           {savingSchedule ? "Saving..." : "Add schedule item"}
         </button>
@@ -2153,7 +2153,7 @@ export default function AdminPage() {
                 <article
                   key={player.id}
                   id={`admin-folder-${player.id}`}
-                  className="overflow-hidden rounded-2xl border border-line bg-[#fbf8f2]"
+                  className="overflow-hidden rounded-2xl border border-line bg-[#eef3f0]"
                 >
                   <button
                     type="button"
@@ -2196,9 +2196,9 @@ export default function AdminPage() {
                             {videos.map((file) => (
                               <article
                                 key={file.path}
-                                className="overflow-hidden rounded-2xl border border-line bg-[#fbf8f2]"
+                                className="overflow-hidden rounded-2xl border border-line bg-[#eef3f0]"
                               >
-                                <div className="aspect-video bg-[#d9d2c4]">
+                                <div className="aspect-video bg-[#e3ece6]">
                                   {file.signedUrl ? (
                                     <video
                                       controls

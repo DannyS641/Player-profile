@@ -7,7 +7,7 @@ create table if not exists profiles (
   email text,
   full_name text not null,
   position text,
-  team text default 'Adrenale 5',
+  team text default 'A5',
   jersey_number text,
   height text,
   weight text,

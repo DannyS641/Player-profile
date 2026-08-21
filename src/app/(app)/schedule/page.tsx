@@ -60,7 +60,7 @@ export default function SchedulePage() {
             {schedule.map((item) => (
               <div
                 key={item.id}
-                className="rounded-2xl border border-line bg-[#fbf8f2] p-4"
+                className="rounded-2xl border border-line bg-[#eef3f0] p-4"
               >
                 <p className="text-xs uppercase tracking-[0.2em] text-muted">
                   {dayNames[item.day_of_week] ?? "Day"}

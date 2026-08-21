@@ -51,9 +51,8 @@ export default function LoginPage() {
 
   return (
     <div className="mx-auto flex max-w-sm flex-col items-center px-2 pb-10 pt-6 text-center">
-      <div className="flex h-16 w-16 items-center justify-center rounded-[22px] bg-accent font-display text-lg font-semibold text-white">
-        A5
-      </div>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/logo.png" alt="A5" className="h-16 w-16" />
       <h1 className="mt-6 font-display text-3xl tracking-tight text-foreground">
         Log in
       </h1>
@@ -67,7 +66,7 @@ export default function LoginPage() {
           placeholder="Email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          className="w-full rounded-2xl bg-[#efe8da] px-5 py-4 text-sm text-foreground outline-none transition placeholder:text-muted focus:bg-[#e6ddc9]"
+          className="w-full rounded-2xl bg-[#eef3f0] px-5 py-4 text-sm text-foreground outline-none transition placeholder:text-muted focus:bg-[#e3ece6]"
         />
         <input
           type="password"
@@ -75,7 +74,7 @@ export default function LoginPage() {
           placeholder="Password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
-          className="w-full rounded-2xl bg-[#efe8da] px-5 py-4 text-sm text-foreground outline-none transition placeholder:text-muted focus:bg-[#e6ddc9]"
+          className="w-full rounded-2xl bg-[#eef3f0] px-5 py-4 text-sm text-foreground outline-none transition placeholder:text-muted focus:bg-[#e3ece6]"
         />
         {message ? (
           <p className="rounded-2xl bg-[#fff4f0] px-4 py-3 text-sm text-[#8f2b18]">
@@ -85,7 +84,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-2xl bg-foreground px-4 py-4 text-sm font-semibold text-background transition hover:bg-[#1e3347] disabled:cursor-not-allowed disabled:opacity-70"
+          className="w-full rounded-2xl bg-foreground px-4 py-4 text-sm font-semibold text-background transition hover:bg-[#08150e] disabled:cursor-not-allowed disabled:opacity-70"
         >
           {loading ? "Signing in..." : "Continue"}
         </button>

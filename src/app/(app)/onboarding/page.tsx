@@ -24,7 +24,7 @@ type ProfileForm = {
 const emptyProfile: ProfileForm = {
   full_name: "",
   position: "",
-  team: "Adrenale 5",
+  team: "A5",
   jersey_number: "",
   height: "",
   weight: "",
@@ -73,7 +73,7 @@ export default function OnboardingPage() {
         setProfile({
           full_name: existingProfile.full_name ?? "",
           position: existingProfile.position ?? "",
-          team: existingProfile.team ?? "Adrenale 5",
+          team: existingProfile.team ?? "A5",
           jersey_number: existingProfile.jersey_number ?? "",
           height: existingProfile.height ?? "",
           weight: existingProfile.weight ?? "",
@@ -307,7 +307,7 @@ export default function OnboardingPage() {
         <button
           type="submit"
           disabled={saving}
-          className="rounded-2xl bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-[#1e3347] disabled:cursor-not-allowed disabled:opacity-70 md:col-span-2"
+          className="rounded-2xl bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-[#08150e] disabled:cursor-not-allowed disabled:opacity-70 md:col-span-2"
         >
           {saving ? "Saving..." : "Save profile"}
         </button>
