@@ -54,7 +54,7 @@ export default function AttendancePage() {
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="card-soft card-tonal rounded-[28px] p-6">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-muted">
-            <Flame className="h-4 w-4 text-accent" />
+            <Flame className="h-4 w-4 text-accent-2" />
             Current streak
           </div>
           <p className="mt-3 font-display text-6xl tracking-tight text-foreground">
@@ -66,7 +66,7 @@ export default function AttendancePage() {
         </div>
         <div className="card-soft card-tonal rounded-[28px] p-6">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-muted">
-            <TrendingUp className="h-4 w-4 text-accent" />
+            <TrendingUp className="h-4 w-4 text-accent-2" />
             Attendance rate
           </div>
           <p className="mt-3 font-display text-6xl tracking-tight text-foreground">

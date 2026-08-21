@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { LogOut } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+import PasswordInput from "@/components/PasswordInput";
 
 type ProfileInfo = {
   full_name: string;
@@ -555,13 +556,14 @@ export default function SettingsPage() {
         <form onSubmit={handlePasswordUpdate} className="mt-6 space-y-4">
           <label className="block text-sm font-medium">
             New password
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              className="mt-2 w-full rounded-2xl border border-line px-4 py-3 text-sm outline-none focus:border-foreground"
-            />
+            <div className="mt-2">
+              <PasswordInput
+                required
+                value={password}
+                onChange={setPassword}
+                className="w-full rounded-2xl border border-line px-4 py-3 text-sm outline-none focus:border-foreground"
+              />
+            </div>
           </label>
           {passwordMessage ? (
             <p className="rounded-2xl border border-line bg-[#f6fff1] px-4 py-3 text-sm text-[#1c5924]">

@@ -40,30 +40,33 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="mx-auto max-w-xl rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8">
-      <div className="space-y-2">
-        <h1 className="font-display text-3xl">Reset your password</h1>
-        <p className="text-sm text-muted">
-          Enter your email and we&apos;ll send a reset link.
-        </p>
-      </div>
-      <form onSubmit={handleResetRequest} className="mt-8 space-y-5">
-        <label className="block text-sm font-medium">
-          Email
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            className="mt-2 w-full rounded-2xl border border-line bg-transparent px-4 py-3 text-sm outline-none transition focus:border-foreground"
-          />
-        </label>
+    <div className="mx-auto flex max-w-sm flex-col items-center px-2 pb-10 pt-6 text-center">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/logo.png" alt="A5" className="h-24 w-24" />
+      <h1 className="mt-6 font-display text-4xl tracking-tight text-foreground">
+        Reset your password
+      </h1>
+      <p className="mt-2 text-base text-muted">
+        Enter your email and we&apos;ll send a reset link.
+      </p>
+      <form
+        onSubmit={handleResetRequest}
+        className="mt-8 w-full space-y-3 text-left"
+      >
+        <input
+          type="email"
+          required
+          placeholder="Email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          className="w-full rounded-2xl bg-[#eef3f0] px-5 py-4 text-base text-foreground outline-none transition placeholder:text-muted focus:bg-[#e3ece6]"
+        />
         {message ? (
           <p
             className={
               message.type === "success"
-                ? "rounded-2xl border border-line bg-[#f6fff1] px-4 py-3 text-sm text-[#1c5924]"
-                : "rounded-2xl border border-line bg-[#fff4f0] px-4 py-3 text-sm text-[#8f2b18]"
+                ? "rounded-2xl bg-[#f6fff1] px-4 py-3 text-sm text-[#1c5924]"
+                : "rounded-2xl bg-[#fff4f0] px-4 py-3 text-sm text-[#8f2b18]"
             }
           >
             {message.text}
@@ -72,7 +75,7 @@ export default function ForgotPasswordPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-2xl bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-[#08150e] disabled:cursor-not-allowed disabled:opacity-70"
+          className="w-full rounded-2xl bg-foreground px-4 py-4 text-base font-semibold text-background transition hover:bg-[#08150e] disabled:cursor-not-allowed disabled:opacity-70"
         >
           {loading ? "Sending link..." : "Send reset link"}
         </button>

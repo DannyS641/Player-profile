@@ -26,7 +26,7 @@ export default function HomePage() {
       <section className="mx-auto w-full max-w-3xl space-y-8 text-center">
         <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-line bg-white/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-muted opacity-0 animate-slide-down">
           Team portal
-          <span className="h-2 w-2 rounded-full bg-accent" />
+          <span className="h-2 w-2 rounded-full bg-accent-2" />
         </div>
         <div className="space-y-4">
           <h1 className="font-display text-4xl tracking-tight text-foreground opacity-0 animate-slide-left animate-delay-100 md:text-6xl">

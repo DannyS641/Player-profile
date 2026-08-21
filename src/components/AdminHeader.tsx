@@ -70,7 +70,7 @@ export default function AdminHeader() {
             className="flex items-center gap-2 font-display text-2xl tracking-tight text-foreground sm:text-[2rem]"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="A5" className="h-8 w-8 sm:h-9 sm:w-9" />
+            <img src="/logo.png" alt="A5" className="h-10 w-10 sm:h-12 sm:w-12" />
             A5 Admin
           </Link>
           <p className="mt-2 max-w-2xl text-sm text-muted">

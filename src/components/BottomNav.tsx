@@ -11,7 +11,6 @@ import {
   MoreHorizontal,
   GraduationCap,
   Images,
-  Settings,
   ShieldCheck,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
@@ -26,7 +25,6 @@ const primaryTabs = [
 const moreLinks = [
   { href: "/education", label: "Education", icon: GraduationCap },
   { href: "/media-dump", label: "Media Dump", icon: Images },
-  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 export default function BottomNav() {
@@ -111,12 +109,12 @@ export default function BottomNav() {
                 key={item.href}
                 href={item.href}
                 className={`flex min-h-[56px] min-w-[56px] flex-1 flex-col items-center justify-center gap-1 py-2 text-[11px] font-semibold transition ${
-                  active ? "text-accent" : "text-muted"
+                  active ? "text-accent-2" : "text-muted"
                 }`}
               >
                 <span
                   className={`flex h-8 w-8 items-center justify-center rounded-full transition ${
-                    active ? "bg-accent/12" : ""
+                    active ? "bg-accent-2/12" : ""
                   }`}
                 >
                   <Icon className="h-5 w-5" strokeWidth={active ? 2.4 : 2} />
@@ -129,14 +127,14 @@ export default function BottomNav() {
             type="button"
             onClick={() => setMoreOpen((current) => !current)}
             className={`flex min-h-[56px] min-w-[56px] flex-1 flex-col items-center justify-center gap-1 py-2 text-[11px] font-semibold transition ${
-              moreOpen || isMoreSectionActive ? "text-accent" : "text-muted"
+              moreOpen || isMoreSectionActive ? "text-accent-2" : "text-muted"
             }`}
             aria-expanded={moreOpen}
             aria-label="More"
           >
             <span
               className={`flex h-8 w-8 items-center justify-center rounded-full transition ${
-                moreOpen || isMoreSectionActive ? "bg-accent/12" : ""
+                moreOpen || isMoreSectionActive ? "bg-accent-2/12" : ""
               }`}
             >
               <MoreHorizontal

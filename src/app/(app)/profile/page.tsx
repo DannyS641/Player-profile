@@ -9,7 +9,6 @@ import {
   ArrowLeftRight,
   Phone,
   Flame,
-  TrendingUp,
   CalendarDays,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
@@ -160,7 +159,11 @@ export default function ProfilePage() {
     };
   }, []);
 
-  const { streak, attendanceRate } = useAttendanceSummary(userId);
+  const { rows: attendanceRows, streak, attendanceRate } = useAttendanceSummary(userId);
+
+  const recentDays = useMemo(() => {
+    return [...attendanceRows].slice(0, 7).reverse();
+  }, [attendanceRows]);
 
   const nextSession = useMemo(() => {
     if (schedule.length === 0) return null;
@@ -313,7 +316,7 @@ export default function ProfilePage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="card-soft flex flex-col items-center gap-4 rounded-[28px] bg-white p-6 text-center sm:flex-row sm:text-left">
-        <div className="relative flex h-20 w-20 shrink-0 items-center justify-center">
+        <div className="relative flex h-28 w-28 shrink-0 items-center justify-center">
           <svg
             className="absolute inset-0 h-full w-full -rotate-90"
             viewBox="0 0 128 128"
@@ -325,7 +328,7 @@ export default function ProfilePage() {
               cy="64"
               r="60"
               fill="none"
-              stroke="var(--accent)"
+              stroke="var(--accent-2)"
               strokeWidth="6"
               strokeLinecap="round"
               strokeDasharray={2 * Math.PI * 60}
@@ -333,7 +336,7 @@ export default function ProfilePage() {
               className="transition-[stroke-dashoffset] duration-700 ease-out"
             />
           </svg>
-          <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-[#e3ece6] shadow-md">
+          <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-[#e3ece6] shadow-md">
             {profile.photo_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -342,24 +345,24 @@ export default function ProfilePage() {
                 className="h-full w-full object-cover object-center"
               />
             ) : (
-              <span className="text-sm font-semibold text-muted">
+              <span className="text-lg font-semibold text-muted">
                 {getInitials(profile.full_name)}
               </span>
             )}
           </div>
         </div>
         <div className="flex-1">
-          <h1 className="font-display text-2xl">
+          <h1 className="font-display text-3xl">
             {profile.full_name || "Player name"}
           </h1>
-          <p className="text-xs uppercase tracking-[0.2em] text-muted">
+          <p className="mt-1 text-sm uppercase tracking-[0.15em] text-muted">
             {profile.position || "Position"} · {profile.team}
           </p>
         </div>
         {completeness < 100 ? (
           <Link
             href="/settings"
-            className="inline-flex shrink-0 items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5 text-[11px] font-semibold text-accent transition hover:bg-accent/15"
+            className="inline-flex shrink-0 items-center gap-2 rounded-full bg-accent-2/10 px-4 py-1.5 text-[11px] font-semibold text-accent-2 transition hover:bg-accent-2/15"
           >
             Complete your profile · {completeness}%
           </Link>
@@ -373,102 +376,112 @@ export default function ProfilePage() {
         )}
       </div>
 
-      {/* Stats */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="card-soft card-tonal rounded-[28px] p-6">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-muted">
-            <Flame className="h-4 w-4 text-accent" />
-            Streak
-          </div>
-          <p className="mt-3 font-display text-5xl tracking-tight text-foreground">
-            {streak}
-          </p>
-          <p className="mt-1 text-sm text-muted">
-            {streak === 1 ? "session in a row" : "sessions in a row"}
-          </p>
+      {/* Next session */}
+      <div className="card-soft card-tonal rounded-[28px] p-6">
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-muted">
+          <CalendarDays className="h-4 w-4 text-accent-2" />
+          Next session
         </div>
-        <div className="card-soft card-tonal rounded-[28px] p-6">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-muted">
-            <TrendingUp className="h-4 w-4 text-accent" />
-            Attendance
+        {nextSession ? (
+          <>
+            <p className="mt-3 font-display text-2xl tracking-tight text-foreground">
+              {nextSession.day_of_week === new Date().getDay()
+                ? "Today"
+                : dayNames[nextSession.day_of_week]}
+            </p>
+            <p className="mt-1 text-sm text-muted">
+              {nextSession.title}
+              {nextSession.time ? ` · ${nextSession.time}` : ""}
+            </p>
+          </>
+        ) : (
+          <p className="mt-3 text-sm text-muted">No schedule published yet.</p>
+        )}
+        <Link
+          href="/schedule"
+          className="mt-1 inline-block text-sm text-muted underline-offset-2 hover:underline"
+        >
+          View schedule
+        </Link>
+      </div>
+
+      {/* Streak + attendance + details */}
+      <div className="card-soft rounded-[28px] bg-white p-6 sm:p-7">
+        <div className="flex items-center justify-between">
+          <div className="flex items-baseline gap-2">
+            <h3 className="font-display text-lg">Streak</h3>
+            <span className="text-sm text-muted">
+              {streak} {streak === 1 ? "session" : "sessions"} in a row
+            </span>
           </div>
-          <p className="mt-3 font-display text-5xl tracking-tight text-foreground">
-            {attendanceRate}%
-          </p>
           <Link
             href="/attendance"
-            className="mt-1 inline-block text-sm text-muted underline-offset-2 hover:underline"
+            className="text-sm text-muted underline-offset-2 hover:underline"
           >
             View history
           </Link>
         </div>
-        <div className="card-soft card-tonal rounded-[28px] p-6">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-muted">
-            <CalendarDays className="h-4 w-4 text-accent" />
-            Next session
+        {recentDays.length > 0 ? (
+          <div className="mt-4 flex items-center gap-2 overflow-x-auto">
+            {recentDays.map((row) => {
+              const dayNum = new Date(row.session_date).getDate();
+              const present = row.status === "present";
+              return (
+                <div
+                  key={row.session_date}
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
+                    present
+                      ? "bg-accent-2/10 text-accent-2"
+                      : "border border-line text-muted"
+                  }`}
+                >
+                  {present ? <Flame className="h-4 w-4" /> : dayNum}
+                </div>
+              );
+            })}
           </div>
-          {nextSession ? (
-            <>
-              <p className="mt-3 font-display text-2xl tracking-tight text-foreground">
-                {nextSession.day_of_week === new Date().getDay()
-                  ? "Today"
-                  : dayNames[nextSession.day_of_week]}
-              </p>
-              <p className="mt-1 text-sm text-muted">
-                {nextSession.title}
-                {nextSession.time ? ` · ${nextSession.time}` : ""}
-              </p>
-            </>
-          ) : (
-            <p className="mt-3 text-sm text-muted">No schedule published yet.</p>
-          )}
-          <Link
-            href="/schedule"
-            className="mt-1 inline-block text-sm text-muted underline-offset-2 hover:underline"
-          >
-            View schedule
-          </Link>
-        </div>
-      </div>
+        ) : (
+          <p className="mt-4 text-sm text-muted">No sessions recorded yet.</p>
+        )}
 
-      {/* Check-in + details */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div className="card-soft rounded-[28px] bg-foreground p-6 text-background sm:p-7">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-background/70">
-            Training session
-          </p>
-          <h2 className="mt-3 font-display text-2xl">
-            Join training and check in.
-          </h2>
-          <p className="mt-3 text-sm text-background/80">
-            Clicking the button records your attendance before opening Zoom.
-          </p>
-          <div className="mt-4 rounded-2xl border border-white/20 bg-white/5 px-4 py-3 text-xs text-background/80">
-            {zoomLink ? "Zoom link is ready." : "Zoom link pending from admin."}
+        <div className="mt-6 grid gap-6 sm:grid-cols-[auto_1fr] sm:items-center">
+          <div className="relative mx-auto flex h-32 w-32 shrink-0 items-center justify-center sm:mx-0">
+            <svg
+              className="absolute inset-0 h-full w-full -rotate-90"
+              viewBox="0 0 128 128"
+              aria-hidden="true"
+            >
+              <circle cx="64" cy="64" r="56" fill="none" stroke="#dbe4de" strokeWidth="10" />
+              <circle
+                cx="64"
+                cy="64"
+                r="56"
+                fill="none"
+                stroke="var(--accent-2)"
+                strokeWidth="10"
+                strokeLinecap="round"
+                strokeDasharray={2 * Math.PI * 56}
+                strokeDashoffset={2 * Math.PI * 56 * (1 - attendanceRate / 100)}
+                className="transition-[stroke-dashoffset] duration-700 ease-out"
+              />
+            </svg>
+            <div className="text-center">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted">
+                Attendance
+              </p>
+              <p className="font-display text-3xl text-foreground">
+                {attendanceRate}%
+              </p>
+            </div>
           </div>
-          <button
-            type="button"
-            onClick={handleCheckIn}
-            className="mt-6 w-full rounded-2xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#08150e]"
-          >
-            Join Zoom and mark present
-          </button>
-          {message ? (
-            <p className="mt-4 rounded-2xl bg-white/10 px-4 py-3 text-xs text-background/90">
-              {message}
-            </p>
-          ) : null}
-        </div>
 
-        <div className="card-soft rounded-[28px] bg-white p-6 sm:p-7">
-          <h3 className="font-display text-lg">Your details</h3>
-          <div className="mt-4 space-y-2">
+          <div className="space-y-2">
             {detailRows.map((row) => (
               <div
                 key={row.label}
-                className="flex items-center gap-3 rounded-2xl bg-[#f4f8f6] px-4 py-3"
+                className="flex items-center gap-3 rounded-2xl bg-[#f4f8f6] px-3 py-2.5"
               >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-accent">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-accent-2">
                   <row.icon className="h-4 w-4" />
                 </span>
                 <span className="flex-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-muted">
@@ -480,14 +493,17 @@ export default function ProfilePage() {
               </div>
             ))}
           </div>
-          <p className="mt-4 text-xs text-muted">
+        </div>
+
+        <div className="mt-4 flex items-center justify-between">
+          <p className="text-xs text-muted">
             COLLEGE OF INTEREST:{" "}
             <span className="font-semibold text-foreground">
               {profile.colleges_of_interest || "Not set"}
             </span>
           </p>
           {socialLinks.length > 0 ? (
-            <div className="mt-4 flex items-center gap-3">
+            <div className="flex items-center gap-3">
               {socialLinks.map((item) => (
                 <a
                   key={item.label}
@@ -503,6 +519,34 @@ export default function ProfilePage() {
             </div>
           ) : null}
         </div>
+      </div>
+
+      {/* Check-in */}
+      <div className="card-soft rounded-[28px] bg-foreground p-6 text-background sm:p-7">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-background/70">
+          Training session
+        </p>
+        <h2 className="mt-3 font-display text-2xl">
+          Join training and check in.
+        </h2>
+        <p className="mt-3 text-sm text-background/80">
+          Clicking the button records your attendance before opening Zoom.
+        </p>
+        <div className="mt-4 rounded-2xl border border-white/20 bg-white/5 px-4 py-3 text-xs text-background/80">
+          {zoomLink ? "Zoom link is ready." : "Zoom link pending from admin."}
+        </div>
+        <button
+          type="button"
+          onClick={handleCheckIn}
+          className="mt-6 w-full rounded-2xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#08150e]"
+        >
+          Join Zoom and mark present
+        </button>
+        {message ? (
+          <p className="mt-4 rounded-2xl bg-white/10 px-4 py-3 text-xs text-background/90">
+            {message}
+          </p>
+        ) : null}
       </div>
     </div>
   );

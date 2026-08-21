@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
+import PasswordInput from "@/components/PasswordInput";
 
 type Message = {
   type: "error" | "success" | "info";
@@ -76,32 +77,34 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className="mx-auto max-w-xl rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8">
-      <div className="space-y-2">
-        <h1 className="font-display text-3xl">Choose a new password</h1>
-        <p className="text-sm text-muted">
-          Use the reset link from your email to set a new password.
-        </p>
-      </div>
-      <form onSubmit={handlePasswordReset} className="mt-8 space-y-5">
-        <label className="block text-sm font-medium">
-          New password
-          <input
-            type="password"
-            required
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            className="mt-2 w-full rounded-2xl border border-line bg-transparent px-4 py-3 text-sm outline-none transition focus:border-foreground"
-          />
-        </label>
+    <div className="mx-auto flex max-w-sm flex-col items-center px-2 pb-10 pt-6 text-center">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/logo.png" alt="A5" className="h-24 w-24" />
+      <h1 className="mt-6 font-display text-4xl tracking-tight text-foreground">
+        Choose a new password
+      </h1>
+      <p className="mt-2 text-base text-muted">
+        Use the reset link from your email to set a new password.
+      </p>
+      <form
+        onSubmit={handlePasswordReset}
+        className="mt-8 w-full space-y-3 text-left"
+      >
+        <PasswordInput
+          required
+          placeholder="New password"
+          value={password}
+          onChange={setPassword}
+          className="w-full rounded-2xl bg-[#eef3f0] px-5 py-4 text-base text-foreground outline-none transition placeholder:text-muted focus:bg-[#e3ece6]"
+        />
         {message ? (
           <p
             className={
               message.type === "success"
-                ? "rounded-2xl border border-line bg-[#f6fff1] px-4 py-3 text-sm text-[#1c5924]"
+                ? "rounded-2xl bg-[#f6fff1] px-4 py-3 text-sm text-[#1c5924]"
                 : message.type === "info"
-                  ? "rounded-2xl border border-line bg-[#eef3f0] px-4 py-3 text-sm text-[#7a5b1f]"
-                  : "rounded-2xl border border-line bg-[#fff4f0] px-4 py-3 text-sm text-[#8f2b18]"
+                  ? "rounded-2xl bg-[#eef3f0] px-4 py-3 text-sm text-[#7a5b1f]"
+                  : "rounded-2xl bg-[#fff4f0] px-4 py-3 text-sm text-[#8f2b18]"
             }
           >
             {message.text}
@@ -110,7 +113,7 @@ export default function ResetPasswordPage() {
         <button
           type="submit"
           disabled={loading || checking}
-          className="w-full rounded-2xl bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-[#08150e] disabled:cursor-not-allowed disabled:opacity-70"
+          className="w-full rounded-2xl bg-foreground px-4 py-4 text-base font-semibold text-background transition hover:bg-[#08150e] disabled:cursor-not-allowed disabled:opacity-70"
         >
           {loading ? "Updating..." : "Update password"}
         </button>
