@@ -32,6 +32,8 @@
 	<string>Used when you record a video with sound to upload as a training clip.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Used to save a photo you take in the app back to your library.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Use Face ID to quickly and securely get back into your account.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
