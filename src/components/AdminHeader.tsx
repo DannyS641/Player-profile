@@ -58,11 +58,11 @@ export default function AdminHeader() {
   };
 
   return (
-    <header className="mx-auto w-full max-w-7xl rounded-[22px] border border-line/80 bg-white/94 px-5 py-5 shadow-[0_18px_40px_-34px_rgba(11,27,43,0.22)] backdrop-blur sm:px-6 sm:py-6">
+    <header className="mx-auto w-full max-w-7xl rounded-[22px] border border-line/80 bg-card/94 px-5 py-5 shadow-[0_18px_40px_-34px_rgba(11,27,43,0.22)] backdrop-blur sm:px-6 sm:py-6">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-line bg-[#eef3f0] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
-            <span className="h-2 w-2 rounded-full bg-[#2f855a]" />
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-line bg-[var(--surface-soft)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+            <span className="h-2 w-2 rounded-full bg-[var(--dot-active)]" />
             Admin Console
           </div>
           <Link
@@ -82,14 +82,14 @@ export default function AdminHeader() {
         <div className="hidden items-center gap-3 lg:flex">
           <Link
             href="/profile"
-            className="inline-flex items-center rounded-full border border-line bg-[#f4f8f6] px-4 py-2 text-sm font-semibold text-foreground transition hover:border-foreground"
+            className="inline-flex items-center rounded-full border border-line bg-[var(--surface-row)] px-4 py-2 text-sm font-semibold text-foreground transition hover:border-foreground"
           >
             Player App
           </Link>
           <button
             type="button"
             onClick={handleSignOut}
-            className="inline-flex items-center rounded-full bg-foreground px-4 py-2 text-sm font-semibold text-background transition hover:bg-[#08150e]"
+            className="inline-flex items-center rounded-full bg-foreground px-4 py-2 text-sm font-semibold text-background transition hover:bg-[var(--ink-hover)]"
           >
             Sign out
           </button>
@@ -98,7 +98,7 @@ export default function AdminHeader() {
         <button
           type="button"
           onClick={() => setMenuOpen((current) => !current)}
-          className="inline-flex items-center justify-center rounded-full border border-line bg-[#f4f8f6] px-4 py-2 text-sm font-semibold transition hover:border-foreground lg:hidden"
+          className="inline-flex items-center justify-center rounded-full border border-line bg-[var(--surface-row)] px-4 py-2 text-sm font-semibold transition hover:border-foreground lg:hidden"
           aria-label="Toggle admin actions"
           aria-expanded={menuOpen}
         >
@@ -106,7 +106,7 @@ export default function AdminHeader() {
         </button>
       </div>
 
-      <div className="mt-6 rounded-[18px] border border-line bg-[#f4f8f6] p-2">
+      <div className="mt-6 rounded-[18px] border border-line bg-[var(--surface-row)] p-2">
         <nav className="hidden items-center gap-1 overflow-x-auto no-scrollbar lg:flex">
           {navItems.map((item) => (
             <a
@@ -114,8 +114,8 @@ export default function AdminHeader() {
               href={item.href}
               className={`shrink-0 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
                 activeSection === item.href
-                  ? "bg-white text-foreground shadow-[0_8px_20px_-18px_rgba(11,27,43,0.45)]"
-                  : "text-muted hover:bg-white hover:text-foreground"
+                  ? "bg-card text-foreground shadow-[0_8px_20px_-18px_rgba(11,27,43,0.45)]"
+                  : "text-muted hover:bg-card hover:text-foreground"
               }`}
             >
               {item.label}
@@ -136,7 +136,7 @@ export default function AdminHeader() {
               setMenuOpen(false);
               window.location.hash = nextHref;
             }}
-            className="w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm font-semibold text-foreground outline-none transition focus:border-foreground"
+            className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm font-semibold text-foreground outline-none transition focus:border-foreground"
           >
             {navItems.map((item) => (
               <option key={item.href} value={item.href}>
@@ -147,7 +147,7 @@ export default function AdminHeader() {
           <button
             type="button"
             onClick={() => setMenuOpen((current) => !current)}
-            className="inline-flex shrink-0 items-center justify-center rounded-2xl border border-line bg-white px-4 py-3 text-sm font-semibold text-foreground transition hover:border-foreground"
+            className="inline-flex shrink-0 items-center justify-center rounded-2xl border border-line bg-card px-4 py-3 text-sm font-semibold text-foreground transition hover:border-foreground"
             aria-label="Toggle admin actions"
             aria-expanded={menuOpen}
           >
@@ -157,8 +157,8 @@ export default function AdminHeader() {
       </div>
 
       {menuOpen ? (
-        <div className="mt-4 grid gap-2 rounded-[18px] border border-line bg-white p-3 shadow-[0_18px_40px_-34px_rgba(11,27,43,0.24)] lg:hidden sm:grid-cols-2">
-          <div className="rounded-2xl border border-line bg-[#f4f8f6] px-4 py-3 text-sm">
+        <div className="mt-4 grid gap-2 rounded-[18px] border border-line bg-card p-3 shadow-[0_18px_40px_-34px_rgba(11,27,43,0.24)] lg:hidden sm:grid-cols-2">
+          <div className="rounded-2xl border border-line bg-[var(--surface-row)] px-4 py-3 text-sm">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
               Current section
             </p>
@@ -177,7 +177,7 @@ export default function AdminHeader() {
           <button
             type="button"
             onClick={handleSignOut}
-            className="rounded-2xl bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-[#08150e]"
+            className="rounded-2xl bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-[var(--ink-hover)]"
           >
             Sign out
           </button>
@@ -189,7 +189,7 @@ export default function AdminHeader() {
           {navItems.find((item) => item.href === activeSection)?.label ?? "Overview"}
         </p>
         <div className="flex items-center gap-2 text-xs text-muted">
-          <span className="h-2 w-2 rounded-full bg-[#2f855a]" />
+          <span className="h-2 w-2 rounded-full bg-[var(--dot-active)]" />
           Live admin workspace
         </div>
       </div>

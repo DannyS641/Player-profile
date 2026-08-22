@@ -9,10 +9,10 @@ export default function AppLayout({
 }>) {
   return (
     <div className="safe-top min-h-[100svh] bg-app">
-      <div className="mx-auto w-full max-w-6xl px-4 pt-4 sm:px-6 sm:pt-6">
+      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
         <AppHeader />
       </div>
-      <main className="mx-auto w-full max-w-6xl px-4 pb-28 pt-6 sm:px-6 sm:pb-16 sm:pt-12">
+      <main className="mx-auto w-full max-w-6xl px-4 pb-28 pt-4 sm:px-6 sm:pb-16 sm:pt-6">
         <PageTransition>{children}</PageTransition>
       </main>
       <BottomNav />

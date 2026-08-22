@@ -40,7 +40,7 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="mx-auto flex max-w-sm flex-col items-center px-2 pb-10 pt-6 text-center">
+    <div className="mx-auto flex max-w-sm flex-col items-center px-2 pb-10 text-center">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/logo.png" alt="A5" className="h-24 w-24" />
       <h1 className="mt-6 font-display text-4xl tracking-tight text-foreground">
@@ -55,18 +55,20 @@ export default function ForgotPasswordPage() {
       >
         <input
           type="email"
+          name="email"
+          autoComplete="username"
           required
           placeholder="Email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          className="w-full rounded-2xl bg-[#eef3f0] px-5 py-4 text-base text-foreground outline-none transition placeholder:text-muted focus:bg-[#e3ece6]"
+          className="w-full rounded-2xl bg-[var(--surface-soft)] px-5 py-4 text-base text-foreground outline-none transition placeholder:text-muted focus:bg-[var(--surface-soft-focus)]"
         />
         {message ? (
           <p
             className={
               message.type === "success"
-                ? "rounded-2xl bg-[#f6fff1] px-4 py-3 text-sm text-[#1c5924]"
-                : "rounded-2xl bg-[#fff4f0] px-4 py-3 text-sm text-[#8f2b18]"
+                ? "rounded-2xl bg-[var(--success-soft)] px-4 py-3 text-sm text-[var(--success)]"
+                : "rounded-2xl bg-[var(--danger-soft)] px-4 py-3 text-sm text-[var(--danger)]"
             }
           >
             {message.text}
@@ -75,7 +77,7 @@ export default function ForgotPasswordPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-2xl bg-foreground px-4 py-4 text-base font-semibold text-background transition hover:bg-[#08150e] disabled:cursor-not-allowed disabled:opacity-70"
+          className="w-full rounded-2xl bg-foreground px-4 py-4 text-base font-semibold text-background transition hover:bg-[var(--ink-hover)] disabled:cursor-not-allowed disabled:opacity-70"
         >
           {loading ? "Sending link..." : "Send reset link"}
         </button>

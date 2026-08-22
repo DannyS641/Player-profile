@@ -200,7 +200,7 @@ export default function MediaDumpPage() {
 
   if (!userId) {
     return (
-      <div className="rounded-[28px] card-soft bg-white p-8">
+      <div className="rounded-[28px] card-soft bg-card p-8">
         <h1 className="font-display text-2xl">Log in required</h1>
         <p className="mt-2 text-sm text-muted">
           Please log in to upload and view your videos.
@@ -217,7 +217,7 @@ export default function MediaDumpPage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-[28px] card-soft bg-white p-6 sm:p-8">
+      <div className="rounded-[28px] card-soft bg-card p-6 sm:p-8">
         <h1 className="font-display text-3xl">Media Dump</h1>
         <p className="mt-2 max-w-2xl text-sm text-muted">
           Upload your game film, practice clips, and highlights. You can watch
@@ -225,7 +225,7 @@ export default function MediaDumpPage() {
         </p>
       </div>
 
-      <section className="rounded-[28px] card-soft bg-white p-6 sm:p-8">
+      <section className="rounded-[28px] card-soft bg-card p-6 sm:p-8">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 className="font-display text-2xl">Your videos</h2>
@@ -238,7 +238,7 @@ export default function MediaDumpPage() {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="rounded-full bg-accent px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#08150e] disabled:cursor-not-allowed disabled:opacity-70"
+              className="rounded-full bg-accent px-5 py-2 text-sm font-semibold text-background transition hover:bg-[var(--ink-hover)] disabled:cursor-not-allowed disabled:opacity-70"
             >
               {uploading ? "Uploading..." : "Upload video"}
             </button>
@@ -253,7 +253,7 @@ export default function MediaDumpPage() {
         </div>
 
         {message ? (
-          <p className="mt-4 rounded-2xl border border-line bg-[#f6fff1] px-4 py-3 text-sm text-[#1c5924]">
+          <p className="mt-4 rounded-2xl border border-line bg-[var(--success-soft)] px-4 py-3 text-sm text-[var(--success)]">
             {message}
           </p>
         ) : null}
@@ -265,9 +265,9 @@ export default function MediaDumpPage() {
             uploads.map((file) => (
               <article
                 key={file.path}
-                className="overflow-hidden rounded-[26px] border border-line bg-[#eef3f0]"
+                className="overflow-hidden rounded-[26px] border border-line bg-[var(--surface-soft)]"
               >
-                <div className="aspect-video bg-[#e3ece6]">
+                <div className="aspect-video bg-[var(--surface-soft-focus)]">
                   {file.signedUrl ? (
                     <video
                       controls
@@ -291,7 +291,7 @@ export default function MediaDumpPage() {
                     <button
                       type="button"
                       onClick={() => handleDelete(file)}
-                      className="shrink-0 rounded-full border border-line px-3 py-1 text-[11px] font-semibold text-[#8f2b18] transition hover:border-[#8f2b18]"
+                      className="shrink-0 rounded-full border border-line px-3 py-1 text-[11px] font-semibold text-[var(--danger)] transition hover:border-[var(--danger)]"
                     >
                       Delete
                     </button>

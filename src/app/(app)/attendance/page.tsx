@@ -25,7 +25,7 @@ export default function AttendancePage() {
     };
   }, []);
 
-  const { rows, loading, minMinutes, streak, attendanceRate } =
+  const { rows, loading, minMinutes, streak, attendanceRate, error } =
     useAttendanceSummary(userId);
 
   if (!authResolved || (userId && loading)) {
@@ -34,7 +34,7 @@ export default function AttendancePage() {
 
   if (!userId) {
     return (
-      <div className="rounded-[28px] card-soft bg-white p-8">
+      <div className="rounded-[28px] card-soft bg-card p-8">
         <h1 className="font-display text-2xl">Log in required</h1>
         <p className="mt-2 text-sm text-muted">
           Please log in to view attendance.
@@ -51,13 +51,18 @@ export default function AttendancePage() {
 
   return (
     <div className="space-y-6">
+      {error ? (
+        <p className="rounded-2xl bg-[var(--danger-soft)] px-4 py-3 text-sm text-[var(--danger)]">
+          {error}
+        </p>
+      ) : null}
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="card-soft card-tonal rounded-[28px] p-6">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-muted">
             <Flame className="h-4 w-4 text-accent-2" />
             Current streak
           </div>
-          <p className="mt-3 font-display text-6xl tracking-tight text-foreground">
+          <p className="mt-3 font-display text-4xl tracking-tight text-foreground">
             {streak}
           </p>
           <p className="mt-1 text-sm text-muted">
@@ -69,76 +74,69 @@ export default function AttendancePage() {
             <TrendingUp className="h-4 w-4 text-accent-2" />
             Attendance rate
           </div>
-          <p className="mt-3 font-display text-6xl tracking-tight text-foreground">
+          <p className="mt-3 font-display text-4xl tracking-tight text-foreground">
             {attendanceRate}%
           </p>
           <p className="mt-1 text-sm text-muted">across all recorded sessions</p>
         </div>
       </div>
 
-      <div className="card-soft rounded-[28px] bg-white p-6 sm:p-8">
-        <div className="flex items-center justify-between">
+      <div className="card-soft rounded-[28px] bg-card p-6 sm:p-8">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="font-display text-3xl">Attendance</h1>
+            <h1 className="font-display text-2xl">Attendance</h1>
             <p className="text-sm text-muted">
               Verified attendance based on Zoom (min {minMinutes} mins).
             </p>
           </div>
           <Link
             href="/profile"
-            className="rounded-full border border-line px-4 py-2 text-xs font-semibold transition hover:border-foreground"
+            className="shrink-0 whitespace-nowrap rounded-full border border-line px-4 py-2 text-xs font-semibold transition hover:border-foreground"
           >
             Back to profile
           </Link>
         </div>
-        <div className="mt-6 overflow-x-auto rounded-2xl border border-line">
-        <table className="min-w-full w-full text-left text-sm sm:min-w-[680px]">
-          <thead className="bg-[#f4f8f6] text-xs uppercase tracking-[0.2em] text-muted">
-            <tr>
-              <th className="px-4 py-3">Session date</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Minutes</th>
-              <th className="px-4 py-3">Source</th>
-              <th className="px-4 py-3">Note</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length === 0 ? (
-              <tr>
-                <td className="px-4 py-6 text-muted" colSpan={5}>
-                  No verified attendance yet.
-                </td>
-              </tr>
-            ) : (
-              rows.map((row) => (
-                <tr
-                  key={row.session_date}
-                  className="border-t border-line text-sm"
-                >
-                  <td className="px-4 py-4">{row.session_date}</td>
-                  <td className="px-4 py-4">
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                        row.status === "present"
-                          ? "bg-[#e7f7ea] text-[#1c5924]"
-                          : row.status === "pending"
-                            ? "bg-[#fff7e6] text-[#8a5a00]"
-                            : "bg-[#fff4f0] text-[#8f2b18]"
-                      }`}
-                    >
-                      {row.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-4">{row.minutes}</td>
-                  <td className="px-4 py-4 capitalize">{row.source}</td>
-                  <td className="px-4 py-4 break-words text-muted">
-                    {row.note}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+
+        <div className="mt-6 space-y-2">
+          {rows.length === 0 ? (
+            <p className="text-sm text-muted">No verified attendance yet.</p>
+          ) : (
+            rows.map((row) => (
+              <div
+                key={row.session_date}
+                className="flex items-center gap-3 rounded-2xl bg-[var(--surface-row)] px-4 py-3"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-foreground">
+                    {row.session_date}
+                  </p>
+                  <p className="truncate text-xs text-muted">{row.note}</p>
+                </div>
+                <div className="shrink-0 text-right">
+                  <span
+                    className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${
+                      row.status === "present"
+                        ? "bg-[var(--success-soft)] text-[var(--success)]"
+                        : row.status === "pending"
+                          ? "bg-[var(--warning-soft)] text-[var(--warning)]"
+                          : "bg-[var(--danger-soft)] text-[var(--danger)]"
+                    }`}
+                  >
+                    {row.status}
+                  </span>
+                  {row.minutes > 0 ? (
+                    <p className="mt-1 text-xs text-muted">
+                      {row.minutes} min · {row.source}
+                    </p>
+                  ) : (
+                    <p className="mt-1 text-xs capitalize text-muted">
+                      {row.source}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

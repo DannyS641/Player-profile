@@ -11,16 +11,6 @@ type CreatePlayerRequest = {
 export async function POST(req: Request) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  console.log("[create-player] env check:", {
-    hasUrl: !!supabaseUrl,
-    hasAnonKey: !!supabaseAnonKey,
-    hasServiceKey: !!serviceKey,
-    serviceKeyStartsWithSpace: serviceKey?.startsWith(" "),
-    serviceKeyLen: serviceKey?.length ?? 0,
-  });
-
   if (!supabaseUrl || !supabaseAnonKey) {
     return NextResponse.json(
       { error: "Missing Supabase env vars." },
@@ -116,14 +106,6 @@ export async function POST(req: Request) {
       user_metadata: { full_name: fullName },
     });
 
-  console.log("[create-player] createUser result:", {
-    email,
-    hasUser: !!created?.user,
-    userId: created?.user?.id,
-    error: createError?.message,
-    errorStatus: createError?.status,
-  });
-
   if (createError || !created.user) {
     return NextResponse.json(
       { error: createError?.message ?? "Failed to create user." },
@@ -146,7 +128,6 @@ export async function POST(req: Request) {
   );
 
   if (profileError) {
-    console.log("[create-player] profile upsert failed:", profileError.message);
     await admin.auth.admin.deleteUser(newUserId);
     return NextResponse.json(
       { error: `Created auth user but profile insert failed: ${profileError.message}. The auth user has been rolled back.` },
@@ -154,7 +135,6 @@ export async function POST(req: Request) {
     );
   }
 
-  console.log("[create-player] success:", { id: newUserId, email });
   return NextResponse.json({
     id: newUserId,
     email,

@@ -12,7 +12,7 @@ import {
   CalendarDays,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
-import { getCheckinLocation, distanceMeters } from "@/lib/checkinLocation";
+import { getCheckinLocation } from "@/lib/checkinLocation";
 import { useAttendanceSummary } from "@/lib/useAttendanceSummary";
 
 type ProfileForm = {
@@ -74,12 +74,8 @@ export default function ProfilePage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [zoomLink, setZoomLink] = useState<string | null>(null);
   const [minMinutes, setMinMinutes] = useState(10);
-  const [venue, setVenue] = useState<{
-    lat: number | null;
-    lng: number | null;
-    radiusM: number;
-  }>({ lat: null, lng: null, radiusM: 150 });
   const [schedule, setSchedule] = useState<ScheduleItem[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -97,11 +93,18 @@ export default function ProfilePage() {
         setUserId(userData.user.id);
       }
 
-      const { data: existingProfile } = await supabase
+      const { data: existingProfile, error: profileError } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", userData.user.id)
         .single();
+
+      // PGRST116 just means "no profile row yet" (new player, headed to
+      // onboarding) — anything else is a real fetch failure worth surfacing,
+      // since it would otherwise look identical to an empty profile.
+      if (profileError && profileError.code !== "PGRST116" && isMounted) {
+        setLoadError("Couldn't load your profile. Check your connection and try again.");
+      }
 
       if (existingProfile && isMounted) {
         setProfile({
@@ -123,18 +126,13 @@ export default function ProfilePage() {
 
       const { data: settings } = await supabase
         .from("app_settings")
-        .select("zoom_link, min_minutes, venue_lat, venue_lng, venue_radius_m")
+        .select("zoom_link, min_minutes")
         .eq("id", 1)
         .single();
 
       if (isMounted) {
         setZoomLink(settings?.zoom_link ?? null);
         setMinMinutes(settings?.min_minutes ?? 10);
-        setVenue({
-          lat: settings?.venue_lat ?? null,
-          lng: settings?.venue_lng ?? null,
-          radiusM: settings?.venue_radius_m ?? 150,
-        });
       }
 
       const { data: scheduleData } = await supabase
@@ -207,17 +205,23 @@ export default function ProfilePage() {
       return;
     }
 
+    // Distance/flag is computed server-side (see compute_checkin_flag trigger),
+    // not trusted from anything calculated on this device.
+    const { data: recorded } = await supabase
+      .from("attendance")
+      .select("checkin_distance_m, checkin_flagged")
+      .eq("player_id", userId)
+      .eq("session_date", today)
+      .single();
+
     let locationNote = "";
-    if (location && venue.lat !== null && venue.lng !== null) {
-      const distance = Math.round(
-        distanceMeters(location.lat, location.lng, venue.lat, venue.lng),
-      );
-      locationNote =
-        distance <= venue.radiusM
-          ? ` Confirmed ${distance}m from venue.`
-          : ` You appear to be ${distance}m from venue — check-in recorded but flagged for review.`;
-    } else if (!location) {
+    if (!location) {
       locationNote = " Location wasn't available, so this check-in is unverified by location.";
+    } else if (recorded?.checkin_distance_m != null) {
+      const distance = Math.round(recorded.checkin_distance_m);
+      locationNote = recorded.checkin_flagged
+        ? ` You appear to be ${distance}m from venue — check-in recorded but flagged for review.`
+        : ` Confirmed ${distance}m from venue.`;
     }
 
     setMessage(
@@ -262,7 +266,7 @@ export default function ProfilePage() {
 
   if (!userId) {
     return (
-      <div className="rounded-[28px] card-soft bg-white p-8">
+      <div className="rounded-[28px] card-soft bg-card p-8">
         <h1 className="font-display text-2xl">Log in required</h1>
         <p className="mt-2 text-sm text-muted">
           Please log in to view your dashboard.
@@ -314,15 +318,20 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-6">
+      {loadError ? (
+        <p className="rounded-2xl bg-[var(--danger-soft)] px-4 py-3 text-sm text-[var(--danger)]">
+          {loadError}
+        </p>
+      ) : null}
       {/* Header */}
-      <div className="card-soft flex flex-col items-center gap-4 rounded-[28px] bg-white p-6 text-center sm:flex-row sm:text-left">
+      <div className="card-soft flex flex-col items-center gap-4 rounded-[28px] bg-card p-6 text-center sm:flex-row sm:text-left">
         <div className="relative flex h-28 w-28 shrink-0 items-center justify-center">
           <svg
             className="absolute inset-0 h-full w-full -rotate-90"
             viewBox="0 0 128 128"
             aria-hidden="true"
           >
-            <circle cx="64" cy="64" r="60" fill="none" stroke="#dbe4de" strokeWidth="6" />
+            <circle cx="64" cy="64" r="60" fill="none" stroke="var(--line)" strokeWidth="6" />
             <circle
               cx="64"
               cy="64"
@@ -336,7 +345,7 @@ export default function ProfilePage() {
               className="transition-[stroke-dashoffset] duration-700 ease-out"
             />
           </svg>
-          <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-[#e3ece6] shadow-md">
+          <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-2 border-card bg-[var(--surface-soft-focus)] shadow-md">
             {profile.photo_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -406,7 +415,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Streak + attendance + details */}
-      <div className="card-soft rounded-[28px] bg-white p-6 sm:p-7">
+      <div className="card-soft rounded-[28px] bg-card p-6 sm:p-7">
         <div className="flex items-center justify-between">
           <div className="flex items-baseline gap-2">
             <h3 className="font-display text-lg">Streak</h3>
@@ -422,24 +431,31 @@ export default function ProfilePage() {
           </Link>
         </div>
         {recentDays.length > 0 ? (
-          <div className="mt-4 flex items-center gap-2 overflow-x-auto">
-            {recentDays.map((row) => {
-              const dayNum = new Date(row.session_date).getDate();
-              const present = row.status === "present";
-              return (
-                <div
-                  key={row.session_date}
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
-                    present
-                      ? "bg-accent-2/10 text-accent-2"
-                      : "border border-line text-muted"
-                  }`}
-                >
-                  {present ? <Flame className="h-4 w-4" /> : dayNum}
-                </div>
-              );
-            })}
-          </div>
+          <>
+            <div className="mt-4 flex items-center gap-2 overflow-x-auto">
+              {recentDays.map((row) => {
+                const dayNum = new Date(row.session_date).getDate();
+                const present = row.status === "present";
+                return (
+                  <div
+                    key={row.session_date}
+                    title={`${row.session_date} — ${present ? "attended" : "not attended"}`}
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
+                      present
+                        ? "bg-accent-2/10 text-accent-2"
+                        : "border border-line text-muted"
+                    }`}
+                  >
+                    {present ? <Flame className="h-4 w-4" /> : dayNum}
+                  </div>
+                );
+              })}
+            </div>
+            <p className="mt-2 text-[11px] text-muted">
+              <Flame className="mb-0.5 inline h-3 w-3 text-accent-2" /> attended
+              &nbsp;·&nbsp; plain number = day of month, not attended
+            </p>
+          </>
         ) : (
           <p className="mt-4 text-sm text-muted">No sessions recorded yet.</p>
         )}
@@ -451,7 +467,7 @@ export default function ProfilePage() {
               viewBox="0 0 128 128"
               aria-hidden="true"
             >
-              <circle cx="64" cy="64" r="56" fill="none" stroke="#dbe4de" strokeWidth="10" />
+              <circle cx="64" cy="64" r="56" fill="none" stroke="var(--line)" strokeWidth="10" />
               <circle
                 cx="64"
                 cy="64"
@@ -479,9 +495,9 @@ export default function ProfilePage() {
             {detailRows.map((row) => (
               <div
                 key={row.label}
-                className="flex items-center gap-3 rounded-2xl bg-[#f4f8f6] px-3 py-2.5"
+                className="flex items-center gap-3 rounded-2xl bg-[var(--surface-row)] px-3 py-2.5"
               >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-accent-2">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-card text-accent-2">
                   <row.icon className="h-4 w-4" />
                 </span>
                 <span className="flex-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-muted">
@@ -532,18 +548,18 @@ export default function ProfilePage() {
         <p className="mt-3 text-sm text-background/80">
           Clicking the button records your attendance before opening Zoom.
         </p>
-        <div className="mt-4 rounded-2xl border border-white/20 bg-white/5 px-4 py-3 text-xs text-background/80">
+        <div className="mt-4 rounded-2xl border border-background/20 bg-background/5 px-4 py-3 text-xs text-background/80">
           {zoomLink ? "Zoom link is ready." : "Zoom link pending from admin."}
         </div>
         <button
           type="button"
           onClick={handleCheckIn}
-          className="mt-6 w-full rounded-2xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#08150e]"
+          className="mt-6 w-full rounded-2xl bg-accent px-4 py-3 text-sm font-semibold text-background transition hover:bg-[var(--ink-hover)]"
         >
           Join Zoom and mark present
         </button>
         {message ? (
-          <p className="mt-4 rounded-2xl bg-white/10 px-4 py-3 text-xs text-background/90">
+          <p className="mt-4 rounded-2xl bg-background/10 px-4 py-3 text-xs text-background/90">
             {message}
           </p>
         ) : null}

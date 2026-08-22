@@ -24,7 +24,7 @@ export default function HomePage() {
     <div className="flex flex-col items-center gap-10 pb-12 text-center">
       <SiteHeader />
       <section className="mx-auto w-full max-w-3xl space-y-8 text-center">
-        <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-line bg-white/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-muted opacity-0 animate-slide-down">
+        <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-line bg-card/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-muted opacity-0 animate-slide-down">
           Team portal
           <span className="h-2 w-2 rounded-full bg-accent-2" />
         </div>
@@ -40,7 +40,7 @@ export default function HomePage() {
         <div className="flex flex-wrap justify-center gap-4 opacity-0 animate-slide-up animate-delay-300">
           <Link
             href="/signup"
-            className="rounded-full bg-foreground px-6 py-3 text-sm font-semibold text-background transition hover:bg-[#08150e]"
+            className="rounded-full bg-foreground px-6 py-3 text-sm font-semibold text-background transition hover:bg-[var(--ink-hover)]"
           >
             Get started
           </Link>

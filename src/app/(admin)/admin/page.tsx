@@ -5,7 +5,6 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { friendlyName, openInNewTab } from "@/lib/files";
 import { apiUrl } from "@/lib/apiBase";
-import { distanceMeters } from "@/lib/checkinLocation";
 import { useConfirm } from "@/components/ConfirmDialog";
 
 type Player = {
@@ -57,6 +56,8 @@ type SelfCheckInRow = {
   checkin_lat: number | null;
   checkin_lng: number | null;
   checkin_accuracy_m: number | null;
+  checkin_distance_m: number | null;
+  checkin_flagged: boolean | null;
 };
 
 type ResourceRow = {
@@ -267,7 +268,7 @@ export default function AdminPage() {
       const { data: selfCheckInData } = await supabase
         .from("attendance")
         .select(
-          "player_id, session_date, method, checked_in_at, checkin_lat, checkin_lng, checkin_accuracy_m",
+          "player_id, session_date, method, checked_in_at, checkin_lat, checkin_lng, checkin_accuracy_m, checkin_distance_m, checkin_flagged",
         )
         .gte("session_date", startKey)
         .order("session_date", { ascending: false });
@@ -500,24 +501,15 @@ export default function AdminPage() {
   }, [attendance, overrides, sessionSettings.min_minutes]);
 
   const selfCheckInsWithDistance = useMemo(() => {
-    const { venue_lat, venue_lng, venue_radius_m } = sessionSettings;
-    return selfCheckIns.map((row) => {
-      const distanceM =
-        row.checkin_lat !== null &&
-        row.checkin_lng !== null &&
-        venue_lat !== null &&
-        venue_lng !== null
-          ? Math.round(
-              distanceMeters(row.checkin_lat, row.checkin_lng, venue_lat, venue_lng),
-            )
-          : null;
-      return {
-        ...row,
-        distanceM,
-        flagged: distanceM !== null && distanceM > venue_radius_m,
-      };
-    });
-  }, [selfCheckIns, sessionSettings]);
+    return selfCheckIns.map((row) => ({
+      ...row,
+      distanceM:
+        row.checkin_distance_m !== null && row.checkin_distance_m !== undefined
+          ? Math.round(row.checkin_distance_m)
+          : null,
+      flagged: Boolean(row.checkin_flagged),
+    }));
+  }, [selfCheckIns]);
 
   const stats = useMemo(() => {
     const total = players.length;
@@ -1044,7 +1036,7 @@ export default function AdminPage() {
 
   if (!userId) {
     return (
-      <div className="rounded-[28px] border border-line bg-white p-6 sm:p-8">
+      <div className="rounded-[28px] border border-line bg-card p-6 sm:p-8">
         <h1 className="font-display text-2xl">Log in required</h1>
         <p className="mt-2 text-sm text-muted">
           Please log in to access the admin dashboard.
@@ -1061,7 +1053,7 @@ export default function AdminPage() {
 
   if (!isAdmin) {
     return (
-      <div className="rounded-[28px] border border-line bg-white p-6 sm:p-8">
+      <div className="rounded-[28px] border border-line bg-card p-6 sm:p-8">
         <h1 className="font-display text-2xl">Access denied</h1>
         <p className="mt-2 text-sm text-muted">
           You do not have admin access.
@@ -1077,7 +1069,7 @@ export default function AdminPage() {
     <div className="space-y-8">
       <div
         id="admin-overview"
-        className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8"
+        className="rounded-[28px] border border-line bg-card p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8"
       >
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -1141,7 +1133,7 @@ export default function AdminPage() {
           </div>
         </div>
         {message ? (
-          <p className="mt-4 rounded-2xl border border-line bg-[#f6fff1] px-4 py-3 text-sm text-[#1c5924]">
+          <p className="mt-4 rounded-2xl border border-line bg-[var(--success-soft)] px-4 py-3 text-sm text-[var(--success)]">
             {message}
           </p>
         ) : null}
@@ -1154,7 +1146,7 @@ export default function AdminPage() {
           ].map((card) => (
             <div
               key={card.label}
-              className="rounded-2xl border border-line bg-[#eef3f0] p-4"
+              className="rounded-2xl border border-line bg-[var(--surface-soft)] p-4"
             >
               <p className="text-xs uppercase tracking-[0.2em] text-muted">
                 {card.label}
@@ -1169,7 +1161,7 @@ export default function AdminPage() {
 
       <div
         id="admin-attendance-trend"
-        className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8"
+        className="rounded-[28px] border border-line bg-card p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8"
       >
         <div className="flex items-center justify-between">
           <div>
@@ -1223,7 +1215,7 @@ export default function AdminPage() {
 
       <div
         id="admin-session-settings"
-        className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8"
+        className="rounded-[28px] border border-line bg-card p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8"
       >
         <div>
           <h2 className="font-display text-2xl">Session settings</h2>
@@ -1363,7 +1355,7 @@ export default function AdminPage() {
           type="button"
           onClick={handleSettingsSave}
           disabled={savingSettings}
-          className="mt-6 rounded-full bg-foreground px-4 py-2 text-sm font-semibold text-background transition hover:bg-[#08150e] disabled:cursor-not-allowed disabled:opacity-70"
+          className="mt-6 rounded-full bg-foreground px-4 py-2 text-sm font-semibold text-background transition hover:bg-[var(--ink-hover)] disabled:cursor-not-allowed disabled:opacity-70"
         >
           {savingSettings ? "Saving..." : "Save session settings"}
         </button>
@@ -1371,7 +1363,7 @@ export default function AdminPage() {
 
       <div
         id="admin-attendance-overrides"
-        className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8"
+        className="rounded-[28px] border border-line bg-card p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8"
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -1432,12 +1424,12 @@ export default function AdminPage() {
           type="button"
           onClick={handleOverrideSave}
           disabled={savingOverride}
-          className="mt-6 rounded-full bg-foreground px-4 py-2 text-sm font-semibold text-background transition hover:bg-[#08150e] disabled:cursor-not-allowed disabled:opacity-70"
+          className="mt-6 rounded-full bg-foreground px-4 py-2 text-sm font-semibold text-background transition hover:bg-[var(--ink-hover)] disabled:cursor-not-allowed disabled:opacity-70"
         >
           {savingOverride ? "Saving..." : "Save override"}
         </button>
         {overrides.length > 0 ? (
-          <div className="mt-6 rounded-2xl border border-line bg-[#eef3f0] p-4 text-xs text-muted">
+          <div className="mt-6 rounded-2xl border border-line bg-[var(--surface-soft)] p-4 text-xs text-muted">
             <p className="font-semibold text-foreground">Recent overrides</p>
             <ul className="mt-2 space-y-1">
               {overrides.slice(0, 5).map((item) => {
@@ -1456,7 +1448,7 @@ export default function AdminPage() {
 
       <div
         id="admin-self-checkins"
-        className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8"
+        className="rounded-[28px] border border-line bg-card p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8"
       >
         <div>
           <h2 className="font-display text-2xl">Self check-ins</h2>
@@ -1466,7 +1458,7 @@ export default function AdminPage() {
         </div>
         <div className="mt-6 overflow-x-auto rounded-2xl border border-line">
           <table className="min-w-full w-full text-left text-sm sm:min-w-[680px]">
-            <thead className="bg-[#f4f8f6] text-xs uppercase tracking-[0.2em] text-muted">
+            <thead className="bg-[var(--surface-row)] text-xs uppercase tracking-[0.2em] text-muted">
               <tr>
                 <th className="px-4 py-3">Date</th>
                 <th className="px-4 py-3">Player</th>
@@ -1495,19 +1487,16 @@ export default function AdminPage() {
                         {(row.method ?? "self_checkin").replaceAll("_", " ")}
                       </td>
                       <td className="px-4 py-4">
-                        {row.distanceM === null ? (
-                          <span className="text-muted">No location</span>
-                        ) : (
-                          <span
-                            className={
-                              row.flagged
-                                ? "font-semibold text-[#8f2b18]"
-                                : "text-[#1c5924]"
-                            }
-                          >
-                            {row.distanceM}m {row.flagged ? "(flagged)" : ""}
+                        <div className="flex items-center gap-2">
+                          <span className={row.distanceM === null ? "text-muted" : ""}>
+                            {row.distanceM === null ? "No location" : `${row.distanceM}m`}
                           </span>
-                        )}
+                          {row.flagged ? (
+                            <span className="rounded-full bg-[var(--danger-soft)] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[var(--danger)]">
+                              Flagged
+                            </span>
+                          ) : null}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -1520,7 +1509,7 @@ export default function AdminPage() {
 
       <div
         id="admin-add-player"
-        className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8"
+        className="rounded-[28px] border border-line bg-card p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8"
       >
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -1533,10 +1522,10 @@ export default function AdminPage() {
         </div>
 
         {lastCreatedPlayer ? (
-          <div className="mt-6 rounded-2xl border border-line bg-[#f6fff1] p-5">
+          <div className="mt-6 rounded-2xl border border-line bg-[var(--success-soft)] p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#1c5924]">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--success)]">
                   Player created
                 </p>
                 <p className="mt-2 font-display text-lg text-foreground">
@@ -1552,12 +1541,12 @@ export default function AdminPage() {
                   setLastCreatedPlayer(null);
                   setCredentialsCopied(false);
                 }}
-                className="rounded-full border border-line bg-white px-4 py-2 text-xs font-semibold transition hover:border-foreground"
+                className="rounded-full border border-line bg-card px-4 py-2 text-xs font-semibold transition hover:border-foreground"
               >
                 Add another
               </button>
             </div>
-            <div className="mt-4 rounded-2xl border border-line bg-white px-4 py-3">
+            <div className="mt-4 rounded-2xl border border-line bg-card px-4 py-3">
               <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">
                 Temporary password
               </p>
@@ -1638,7 +1627,7 @@ export default function AdminPage() {
               </label>
             </div>
             {createPlayerError ? (
-              <p className="rounded-2xl border border-line bg-[#fff4f0] px-4 py-3 text-sm text-[#8f2b18]">
+              <p className="rounded-2xl border border-line bg-[var(--danger-soft)] px-4 py-3 text-sm text-[var(--danger)]">
                 {createPlayerError}
               </p>
             ) : null}
@@ -1646,7 +1635,7 @@ export default function AdminPage() {
               type="button"
               onClick={handleCreatePlayer}
               disabled={creatingPlayer}
-              className="rounded-full bg-foreground px-5 py-2 text-sm font-semibold text-background transition hover:bg-[#08150e] disabled:cursor-not-allowed disabled:opacity-70"
+              className="rounded-full bg-foreground px-5 py-2 text-sm font-semibold text-background transition hover:bg-[var(--ink-hover)] disabled:cursor-not-allowed disabled:opacity-70"
             >
               {creatingPlayer ? "Creating..." : "Create player"}
             </button>
@@ -1656,7 +1645,7 @@ export default function AdminPage() {
 
       <div
         id="admin-remove-orphan"
-        className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8"
+        className="rounded-[28px] border border-line bg-card p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8"
       >
         <div>
           <h2 className="font-display text-2xl">Remove orphan account</h2>
@@ -1680,7 +1669,7 @@ export default function AdminPage() {
             type="button"
             onClick={handleRemoveOrphanByEmail}
             disabled={removingOrphan}
-            className="rounded-full border border-[#8f2b18] px-5 py-2 text-sm font-semibold text-[#8f2b18] transition hover:bg-[#fff4f0] disabled:cursor-not-allowed disabled:opacity-70"
+            className="rounded-full border border-[var(--danger)] px-5 py-2 text-sm font-semibold text-[var(--danger)] transition hover:bg-[var(--danger-soft)] disabled:cursor-not-allowed disabled:opacity-70"
           >
             {removingOrphan ? "Removing..." : "Remove account"}
           </button>
@@ -1689,8 +1678,8 @@ export default function AdminPage() {
           <p
             className={
               orphanResult.tone === "success"
-                ? "mt-4 rounded-2xl border border-line bg-[#f6fff1] px-4 py-3 text-sm text-[#1c5924]"
-                : "mt-4 rounded-2xl border border-line bg-[#fff4f0] px-4 py-3 text-sm text-[#8f2b18]"
+                ? "mt-4 rounded-2xl border border-line bg-[var(--success-soft)] px-4 py-3 text-sm text-[var(--success)]"
+                : "mt-4 rounded-2xl border border-line bg-[var(--danger-soft)] px-4 py-3 text-sm text-[var(--danger)]"
             }
           >
             {orphanResult.text}
@@ -1700,7 +1689,7 @@ export default function AdminPage() {
 
       <div
         id="admin-players"
-        className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8"
+        className="rounded-[28px] border border-line bg-card p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8"
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -1719,7 +1708,7 @@ export default function AdminPage() {
         </div>
         <div className="mt-6 overflow-x-auto rounded-2xl border border-line">
           <table className="min-w-full w-full text-left text-sm sm:min-w-[1280px]">
-            <thead className="bg-[#f4f8f6] text-xs uppercase tracking-[0.2em] text-muted">
+            <thead className="bg-[var(--surface-row)] text-xs uppercase tracking-[0.2em] text-muted">
               <tr>
                 <th className="px-4 py-3">Player</th>
                 <th className="px-4 py-3">Email</th>
@@ -1819,7 +1808,7 @@ export default function AdminPage() {
                         <button
                           type="button"
                           onClick={() => handleDeletePlayer(player)}
-                          className="rounded-full border border-line px-3 py-1 text-[11px] font-semibold text-[#8f2b18] transition hover:border-[#8f2b18]"
+                          className="rounded-full border border-line px-3 py-1 text-[11px] font-semibold text-[var(--danger)] transition hover:border-[var(--danger)]"
                         >
                           Delete player
                         </button>
@@ -1835,7 +1824,7 @@ export default function AdminPage() {
 
       <div
         id="admin-education-resources"
-        className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8"
+        className="rounded-[28px] border border-line bg-card p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8"
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -1919,7 +1908,7 @@ export default function AdminPage() {
           type="button"
           onClick={handleResourceSave}
           disabled={savingResource}
-          className="mt-5 rounded-full bg-foreground px-4 py-2 text-sm font-semibold text-background transition hover:bg-[#08150e] disabled:cursor-not-allowed disabled:opacity-70"
+          className="mt-5 rounded-full bg-foreground px-4 py-2 text-sm font-semibold text-background transition hover:bg-[var(--ink-hover)] disabled:cursor-not-allowed disabled:opacity-70"
         >
           {savingResource ? "Saving..." : "Add resource"}
         </button>
@@ -1953,7 +1942,7 @@ export default function AdminPage() {
 
       <div
         id="admin-weekly-schedule"
-        className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8"
+        className="rounded-[28px] border border-line bg-card p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8"
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -2078,7 +2067,7 @@ export default function AdminPage() {
           type="button"
           onClick={handleScheduleSave}
           disabled={savingSchedule}
-          className="mt-5 rounded-full bg-foreground px-4 py-2 text-sm font-semibold text-background transition hover:bg-[#08150e] disabled:cursor-not-allowed disabled:opacity-70"
+          className="mt-5 rounded-full bg-foreground px-4 py-2 text-sm font-semibold text-background transition hover:bg-[var(--ink-hover)] disabled:cursor-not-allowed disabled:opacity-70"
         >
           {savingSchedule ? "Saving..." : "Add schedule item"}
         </button>
@@ -2113,7 +2102,7 @@ export default function AdminPage() {
 
       <div
         id="admin-player-folders"
-        className="rounded-[28px] border border-line bg-white p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8"
+        className="rounded-[28px] border border-line bg-card p-6 shadow-[0_20px_60px_-45px_rgba(11,27,43,0.7)] sm:p-8"
       >
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -2153,7 +2142,7 @@ export default function AdminPage() {
                 <article
                   key={player.id}
                   id={`admin-folder-${player.id}`}
-                  className="overflow-hidden rounded-2xl border border-line bg-[#eef3f0]"
+                  className="overflow-hidden rounded-2xl border border-line bg-[var(--surface-soft)]"
                 >
                   <button
                     type="button"
@@ -2163,7 +2152,7 @@ export default function AdminPage() {
                     <div className="flex items-center gap-3">
                       <span
                         aria-hidden
-                        className={`inline-flex h-6 w-6 items-center justify-center rounded-full border border-line bg-white text-sm transition ${
+                        className={`inline-flex h-6 w-6 items-center justify-center rounded-full border border-line bg-card text-sm transition ${
                           isOpen ? "rotate-90" : ""
                         }`}
                       >
@@ -2184,7 +2173,7 @@ export default function AdminPage() {
                     </span>
                   </button>
                   {isOpen ? (
-                    <div className="space-y-5 border-t border-line bg-white px-5 py-5">
+                    <div className="space-y-5 border-t border-line bg-card px-5 py-5">
                       <section>
                         <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">
                           Media dump · {videos.length}
@@ -2196,9 +2185,9 @@ export default function AdminPage() {
                             {videos.map((file) => (
                               <article
                                 key={file.path}
-                                className="overflow-hidden rounded-2xl border border-line bg-[#eef3f0]"
+                                className="overflow-hidden rounded-2xl border border-line bg-[var(--surface-soft)]"
                               >
-                                <div className="aspect-video bg-[#e3ece6]">
+                                <div className="aspect-video bg-[var(--surface-soft-focus)]">
                                   {file.signedUrl ? (
                                     <video
                                       controls
@@ -2224,7 +2213,7 @@ export default function AdminPage() {
                                       onClick={() =>
                                         handleVideoDelete(file.path, file.name)
                                       }
-                                      className="shrink-0 rounded-full border border-line px-3 py-1 text-[11px] font-semibold text-[#8f2b18] transition hover:border-[#8f2b18]"
+                                      className="shrink-0 rounded-full border border-line px-3 py-1 text-[11px] font-semibold text-[var(--danger)] transition hover:border-[var(--danger)]"
                                     >
                                       Delete
                                     </button>
@@ -2272,7 +2261,7 @@ export default function AdminPage() {
                                     onClick={() =>
                                       handleDocDelete(file.path, file.name)
                                     }
-                                    className="rounded-full border border-line px-3 py-1 text-xs font-semibold text-[#8f2b18] transition hover:border-[#8f2b18]"
+                                    className="rounded-full border border-line px-3 py-1 text-xs font-semibold text-[var(--danger)] transition hover:border-[var(--danger)]"
                                   >
                                     Delete
                                   </button>
@@ -2312,7 +2301,7 @@ export default function AdminPage() {
                                     onClick={() =>
                                       handleEssayDelete(file.path, file.name)
                                     }
-                                    className="rounded-full border border-line px-3 py-1 text-xs font-semibold text-[#8f2b18] transition hover:border-[#8f2b18]"
+                                    className="rounded-full border border-line px-3 py-1 text-xs font-semibold text-[var(--danger)] transition hover:border-[var(--danger)]"
                                   >
                                     Delete
                                   </button>

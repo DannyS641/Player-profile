@@ -105,6 +105,67 @@ create table if not exists attendance (
 alter table attendance add column if not exists checkin_lat double precision;
 alter table attendance add column if not exists checkin_lng double precision;
 alter table attendance add column if not exists checkin_accuracy_m double precision;
+alter table attendance add column if not exists checkin_distance_m double precision;
+alter table attendance add column if not exists checkin_flagged boolean default false;
+
+-- Computes checkin_distance_m / checkin_flagged server-side from the
+-- submitted coordinates and the venue settings at the moment of check-in,
+-- so the flag can't just be a client-supplied value and stays queryable.
+create or replace function public.compute_checkin_flag()
+returns trigger
+language plpgsql
+as $$
+declare
+  v_lat double precision;
+  v_lng double precision;
+  v_radius double precision;
+  earth_radius_m constant double precision := 6371000;
+  dlat double precision;
+  dlng double precision;
+  a double precision;
+begin
+  select venue_lat, venue_lng, venue_radius_m
+    into v_lat, v_lng, v_radius
+    from app_settings where id = 1;
+
+  if new.checkin_lat is null or new.checkin_lng is null then
+    new.checkin_distance_m := null;
+    new.checkin_flagged := true;
+    return new;
+  end if;
+
+  if v_lat is null or v_lng is null then
+    new.checkin_distance_m := null;
+    new.checkin_flagged := false;
+    return new;
+  end if;
+
+  dlat := radians(new.checkin_lat - v_lat);
+  dlng := radians(new.checkin_lng - v_lng);
+  a := sin(dlat / 2) * sin(dlat / 2)
+    + cos(radians(v_lat)) * cos(radians(new.checkin_lat)) * sin(dlng / 2) * sin(dlng / 2);
+
+  new.checkin_distance_m := earth_radius_m * 2 * atan2(sqrt(a), sqrt(1 - a));
+  new.checkin_flagged := new.checkin_distance_m > coalesce(v_radius, 150);
+  return new;
+end;
+$$;
+
+drop trigger if exists attendance_compute_flag on attendance;
+create trigger attendance_compute_flag
+  before insert or update on attendance
+  for each row
+  execute function public.compute_checkin_flag();
+
+create table if not exists personal_reminders (
+  id uuid primary key default gen_random_uuid(),
+  player_id uuid references profiles (id) on delete cascade,
+  event_date date not null,
+  title text not null,
+  created_at timestamptz default now()
+);
+
+alter table personal_reminders enable row level security;
 
 alter table profiles enable row level security;
 alter table attendance enable row level security;
@@ -144,6 +205,10 @@ drop policy if exists "Profiles are insertable by owner" on profiles;
 drop policy if exists "Profiles are updatable by owner" on profiles;
 drop policy if exists "Attendance is viewable by owner" on attendance;
 drop policy if exists "Attendance is insertable by owner" on attendance;
+drop policy if exists "Personal reminders are viewable by owner" on personal_reminders;
+drop policy if exists "Personal reminders are insertable by owner" on personal_reminders;
+drop policy if exists "Personal reminders are updatable by owner" on personal_reminders;
+drop policy if exists "Personal reminders are deletable by owner" on personal_reminders;
 drop policy if exists "App settings are readable" on app_settings;
 drop policy if exists "App settings are updatable by admin" on app_settings;
 drop policy if exists "App settings are insertable by admin" on app_settings;
@@ -197,6 +262,23 @@ create policy "Attendance is viewable by owner"
 create policy "Attendance is insertable by owner"
   on attendance for insert
   with check (auth.uid() = player_id or public.is_admin());
+
+create policy "Personal reminders are viewable by owner"
+  on personal_reminders for select
+  using (auth.uid() = player_id);
+
+create policy "Personal reminders are insertable by owner"
+  on personal_reminders for insert
+  with check (auth.uid() = player_id);
+
+create policy "Personal reminders are updatable by owner"
+  on personal_reminders for update
+  using (auth.uid() = player_id)
+  with check (auth.uid() = player_id);
+
+create policy "Personal reminders are deletable by owner"
+  on personal_reminders for delete
+  using (auth.uid() = player_id);
 
 create policy "App settings are readable"
   on app_settings for select

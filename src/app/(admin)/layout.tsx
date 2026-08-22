@@ -8,10 +8,10 @@ export default function AdminLayout({
 }>) {
   return (
     <div className="safe-top min-h-[100svh] bg-app">
-      <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-6 sm:pt-6">
+      <div className="mx-auto max-w-7xl px-4 pt-3 sm:px-6 sm:pt-4">
         <AdminHeader />
       </div>
-      <main className="mx-auto w-full max-w-7xl px-4 pb-16 pt-8 sm:px-6 sm:pt-10">
+      <main className="mx-auto w-full max-w-7xl px-4 pb-16 pt-4 sm:px-6 sm:pt-6">
         <PageTransition>{children}</PageTransition>
       </main>
     </div>

@@ -150,7 +150,7 @@ export default function OnboardingPage() {
 
   if (!userId) {
     return (
-      <div className="rounded-[28px] card-soft bg-white p-8">
+      <div className="rounded-[28px] card-soft bg-card p-8">
         <h1 className="font-display text-2xl">Log in required</h1>
         <p className="mt-2 text-sm text-muted">
           Please log in to complete your player profile.
@@ -166,7 +166,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl rounded-[28px] card-soft bg-white p-6 sm:p-8">
+    <div className="mx-auto max-w-3xl rounded-[28px] card-soft bg-card p-6 sm:p-8">
       <div className="space-y-2">
         <h1 className="font-display text-3xl">Set up your profile</h1>
         <p className="text-sm text-muted">
@@ -300,14 +300,14 @@ export default function OnboardingPage() {
           />
         </label>
         {message ? (
-          <p className="rounded-2xl border border-line bg-[#fff4f0] px-4 py-3 text-sm text-[#8f2b18] md:col-span-2">
+          <p className="rounded-2xl border border-line bg-[var(--danger-soft)] px-4 py-3 text-sm text-[var(--danger)] md:col-span-2">
             {message}
           </p>
         ) : null}
         <button
           type="submit"
           disabled={saving}
-          className="rounded-2xl bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-[#08150e] disabled:cursor-not-allowed disabled:opacity-70 md:col-span-2"
+          className="rounded-2xl bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-[var(--ink-hover)] disabled:cursor-not-allowed disabled:opacity-70 md:col-span-2"
         >
           {saving ? "Saving..." : "Save profile"}
         </button>

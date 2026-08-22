@@ -26,6 +26,12 @@
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Confirms you're at training when you check in. Location is only used at the moment you tap check-in and is never tracked in the background.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Used when you choose "Take Photo" to upload a profile photo or a training clip.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Used when you record a video with sound to upload as a training clip.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Used to save a photo you take in the app back to your library.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

@@ -9,6 +9,8 @@ type PasswordInputProps = {
   className: string;
   placeholder?: string;
   required?: boolean;
+  autoComplete?: string;
+  name?: string;
 };
 
 export default function PasswordInput({
@@ -17,6 +19,8 @@ export default function PasswordInput({
   className,
   placeholder,
   required,
+  autoComplete,
+  name,
 }: PasswordInputProps) {
   const [visible, setVisible] = useState(false);
 
@@ -28,6 +32,8 @@ export default function PasswordInput({
         placeholder={placeholder}
         value={value}
         onChange={(event) => onChange(event.target.value)}
+        autoComplete={autoComplete}
+        name={name}
         className={`${className} pr-12`}
       />
       <button

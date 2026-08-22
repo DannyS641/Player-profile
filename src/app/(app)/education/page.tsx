@@ -157,7 +157,7 @@ export default function EducationPage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-[28px] card-soft bg-white p-6 sm:p-8">
+      <div className="rounded-[28px] card-soft bg-card p-6 sm:p-8">
         <h1 className="font-display text-3xl">Education</h1>
         <p className="mt-2 text-sm text-muted">
           Film study, YouTube breakdowns, and essay submissions.
@@ -165,7 +165,7 @@ export default function EducationPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <section className="rounded-[28px] card-soft bg-white p-6 sm:p-8">
+        <section className="rounded-[28px] card-soft bg-card p-6 sm:p-8">
           <h2 className="font-display text-2xl">Film study videos</h2>
           <div className="mt-4 space-y-4">
             {films.length === 0 ? (
@@ -189,7 +189,7 @@ export default function EducationPage() {
           </div>
         </section>
 
-        <section className="rounded-[28px] card-soft bg-white p-6 sm:p-8">
+        <section className="rounded-[28px] card-soft bg-card p-6 sm:p-8">
           <h2 className="font-display text-2xl">YouTube videos</h2>
           <div className="mt-4 space-y-4">
             {youtubes.length === 0 ? (
@@ -214,7 +214,7 @@ export default function EducationPage() {
         </section>
       </div>
 
-      <section className="rounded-[28px] card-soft bg-white p-6 sm:p-8">
+      <section className="rounded-[28px] card-soft bg-card p-6 sm:p-8">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 className="font-display text-2xl">Essay submissions</h2>
@@ -227,7 +227,7 @@ export default function EducationPage() {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="rounded-full bg-foreground px-5 py-2 text-sm font-semibold text-background transition hover:bg-[#08150e] disabled:cursor-not-allowed disabled:opacity-70"
+              className="rounded-full bg-foreground px-5 py-2 text-sm font-semibold text-background transition hover:bg-[var(--ink-hover)] disabled:cursor-not-allowed disabled:opacity-70"
             >
               {uploading ? "Uploading..." : "Upload essay"}
             </button>
@@ -240,7 +240,7 @@ export default function EducationPage() {
           </div>
         </div>
         {message ? (
-          <p className="mt-4 rounded-2xl border border-line bg-[#f6fff1] px-4 py-3 text-sm text-[#1c5924]">
+          <p className="mt-4 rounded-2xl border border-line bg-[var(--success-soft)] px-4 py-3 text-sm text-[var(--success)]">
             {message}
           </p>
         ) : null}
@@ -270,7 +270,7 @@ export default function EducationPage() {
                   <button
                     type="button"
                     onClick={() => handleDelete(file)}
-                    className="rounded-full border border-line px-3 py-1 text-xs font-semibold text-[#8f2b18] transition hover:border-[#8f2b18]"
+                    className="rounded-full border border-line px-3 py-1 text-xs font-semibold text-[var(--danger)] transition hover:border-[var(--danger)]"
                   >
                     Delete
                   </button>

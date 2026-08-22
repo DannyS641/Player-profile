@@ -97,11 +97,11 @@ export function PromptDialogProvider({
             type="button"
             aria-label="Dismiss dialog"
             onClick={() => resolveWith(null)}
-            className="absolute inset-0 bg-[#0d271b]/55 backdrop-blur-sm"
+            className="absolute inset-0 bg-foreground/55 backdrop-blur-sm"
           />
           <form
             onSubmit={handleSubmit}
-            className="relative w-full max-w-md rounded-[28px] border border-line bg-white p-6 shadow-[0_30px_80px_-40px_rgba(11,27,43,0.55)] sm:p-8"
+            className="relative w-full max-w-md rounded-[28px] border border-line bg-card p-6 shadow-[0_30px_80px_-40px_rgba(11,27,43,0.55)] sm:p-8"
           >
             <h2
               id="prompt-dialog-title"
@@ -116,7 +116,7 @@ export function PromptDialogProvider({
             ) : null}
             <label className="mt-5 block text-xs font-semibold uppercase tracking-[0.18em] text-muted">
               {pending.options.label ?? "Name"}
-              <div className="mt-2 flex items-center gap-1 rounded-2xl border border-line bg-white px-3 transition focus-within:border-foreground">
+              <div className="mt-2 flex items-center gap-1 rounded-2xl border border-line bg-card px-3 transition focus-within:border-foreground">
                 <input
                   ref={inputRef}
                   type="text"
@@ -142,7 +142,7 @@ export function PromptDialogProvider({
               </button>
               <button
                 type="submit"
-                className="min-h-[44px] rounded-full bg-foreground px-5 py-2 text-sm font-semibold text-background transition hover:bg-[#08150e]"
+                className="min-h-[44px] rounded-full bg-foreground px-5 py-2 text-sm font-semibold text-background transition hover:bg-[var(--ink-hover)]"
               >
                 {pending.options.confirmLabel ?? "OK"}
               </button>

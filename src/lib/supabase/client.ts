@@ -23,14 +23,22 @@ export const setRememberMe = (remember: boolean) => {
 
 // Auth session storage that only persists across app restarts when
 // "remember me" is enabled; otherwise it lives in memory for this session only.
+// Every branch guards against SSR/build-time execution, where `window` doesn't exist.
 const hybridStorage = {
   getItem: (key: string) => {
+    if (typeof window === "undefined") {
+      return memoryStore.get(key) ?? null;
+    }
     if (rememberMeEnabled()) {
       return window.localStorage.getItem(key);
     }
     return memoryStore.get(key) ?? null;
   },
   setItem: (key: string, value: string) => {
+    if (typeof window === "undefined") {
+      memoryStore.set(key, value);
+      return;
+    }
     if (rememberMeEnabled()) {
       window.localStorage.setItem(key, value);
     } else {
@@ -38,7 +46,9 @@ const hybridStorage = {
     }
   },
   removeItem: (key: string) => {
-    window.localStorage.removeItem(key);
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem(key);
+    }
     memoryStore.delete(key);
   },
 };

@@ -53,7 +53,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="mx-auto flex max-w-sm flex-col items-center px-2 pb-10 pt-6 text-center">
+    <div className="mx-auto flex max-w-sm flex-col items-center px-2 pb-10 text-center">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/logo.png" alt="A5" className="h-24 w-24" />
       <h1 className="mt-6 font-display text-4xl tracking-tight text-foreground">
@@ -65,18 +65,22 @@ export default function LoginPage() {
       <form onSubmit={handleLogin} className="mt-8 w-full space-y-3 text-left">
         <input
           type="email"
+          name="email"
+          autoComplete="username"
           required
           placeholder="Email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          className="w-full rounded-2xl bg-[#eef3f0] px-5 py-4 text-base text-foreground outline-none transition placeholder:text-muted focus:bg-[#e3ece6]"
+          className="w-full rounded-2xl bg-[var(--surface-soft)] px-5 py-4 text-base text-foreground outline-none transition placeholder:text-muted focus:bg-[var(--surface-soft-focus)]"
         />
         <PasswordInput
+          name="password"
+          autoComplete="current-password"
           required
           placeholder="Password"
           value={password}
           onChange={setPassword}
-          className="w-full rounded-2xl bg-[#eef3f0] px-5 py-4 text-base text-foreground outline-none transition placeholder:text-muted focus:bg-[#e3ece6]"
+          className="w-full rounded-2xl bg-[var(--surface-soft)] px-5 py-4 text-base text-foreground outline-none transition placeholder:text-muted focus:bg-[var(--surface-soft-focus)]"
         />
         <label className="flex items-center gap-2 px-1 text-sm text-muted">
           <input
@@ -88,14 +92,14 @@ export default function LoginPage() {
           Remember me
         </label>
         {message ? (
-          <p className="rounded-2xl bg-[#fff4f0] px-4 py-3 text-sm text-[#8f2b18]">
+          <p className="rounded-2xl bg-[var(--danger-soft)] px-4 py-3 text-sm text-[var(--danger)]">
             {message}
           </p>
         ) : null}
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-2xl bg-foreground px-4 py-4 text-base font-semibold text-background transition hover:bg-[#08150e] disabled:cursor-not-allowed disabled:opacity-70"
+          className="w-full rounded-2xl bg-foreground px-4 py-4 text-base font-semibold text-background transition hover:bg-[var(--ink-hover)] disabled:cursor-not-allowed disabled:opacity-70"
         >
           {loading ? "Signing in..." : "Continue"}
         </button>

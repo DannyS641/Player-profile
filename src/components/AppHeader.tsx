@@ -34,7 +34,7 @@ export default function AppHeader() {
   }, []);
 
   return (
-    <header className="mx-auto w-full max-w-6xl px-5 py-4 sm:px-6 sm:py-5">
+    <header className="mx-auto w-full max-w-6xl pt-2 sm:pt-3">
       <div className="flex items-center justify-between gap-3 md:hidden">
         <Link href="/profile" className="flex items-center whitespace-nowrap">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -43,7 +43,7 @@ export default function AppHeader() {
         <Link
           href="/settings"
           aria-label="Settings"
-          className="flex h-10 w-10 items-center justify-center rounded-full text-foreground transition hover:bg-[#f4f8f6]"
+          className="flex h-10 w-10 items-center justify-center rounded-full text-foreground transition hover:bg-[var(--surface-row)]"
         >
           <Settings className="h-5 w-5" />
         </Link>

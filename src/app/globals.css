@@ -8,6 +8,49 @@
   --accent-2: #16a34a;
   --card: #ffffff;
   --line: #dbe4de;
+
+  --surface-soft: #eef3f0;
+  --surface-soft-focus: #e3ece6;
+  --surface-row: #f4f8f6;
+  --ink-hover: #08150e;
+
+  --success: #1c5924;
+  --success-soft: #f6fff1;
+  --danger: #8f2b18;
+  --danger-solid: #8f2b18;
+  --danger-soft: #fff4f0;
+  --danger-hover: #6f2113;
+  --warning: #8a5a00;
+  --warning-soft: #fff7e6;
+  --info: #7a5b1f;
+  --dot-active: #2f855a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b1712;
+    --ink: #eef6f1;
+    --muted: #93a89d;
+    --accent: #eef6f1;
+    --card: #10231b;
+    --line: #1e352b;
+
+    --surface-soft: #16281f;
+    --surface-soft-focus: #1c3226;
+    --surface-row: #132720;
+    --ink-hover: #d7e6dd;
+
+    --success: #7fd696;
+    --success-soft: rgba(52, 211, 153, 0.14);
+    --danger: #ff9a84;
+    --danger-solid: #b3392a;
+    --danger-soft: rgba(143, 43, 24, 0.22);
+    --danger-hover: #8f2b18;
+    --warning: #eec468;
+    --warning-soft: rgba(138, 90, 0, 0.22);
+    --info: #eec468;
+    --dot-active: #4ade80;
+  }
 }
 
 @theme inline {
@@ -25,7 +68,7 @@
 body {
   background: var(--bg);
   color: var(--ink);
-  font-family: var(--font-body), system-ui, sans-serif;
+  font-family: ui-rounded, var(--font-rounded-fallback), var(--font-body), system-ui, sans-serif;
 }
 
 /* iOS auto-zooms on focus for any input under 16px and doesn't reliably zoom back out; forcing 16px here stops it at the source instead of disabling pinch-zoom app-wide. */
@@ -58,8 +101,19 @@ button {
   );
 }
 
+@media (prefers-color-scheme: dark) {
+  .bg-app {
+    background-image: radial-gradient(
+      ellipse 1200px 600px at 50% -10%,
+      rgba(52, 211, 153, 0.08) 0%,
+      rgba(11, 23, 18, 0) 70%
+    );
+  }
+}
+
 .font-display {
-  font-family: var(--font-display), system-ui, sans-serif;
+  font-family: ui-rounded, var(--font-rounded-fallback), var(--font-display), system-ui, sans-serif;
+  font-weight: 800;
 }
 
 .safe-top {
@@ -77,6 +131,12 @@ button {
 
 .card-tonal {
   background: linear-gradient(160deg, rgba(13, 39, 27, 0.08) 0%, rgba(244, 248, 246, 0.6) 55%, #ffffff 100%);
+}
+
+@media (prefers-color-scheme: dark) {
+  .card-tonal {
+    background: linear-gradient(160deg, rgba(52, 211, 153, 0.12) 0%, rgba(19, 39, 32, 0.6) 55%, #10231b 100%);
+  }
 }
 
 .no-scrollbar::-webkit-scrollbar {

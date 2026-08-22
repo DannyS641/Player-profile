@@ -266,7 +266,7 @@ export default function SettingsPage() {
 
   if (!userId) {
     return (
-      <div className="rounded-[28px] card-soft bg-white p-8">
+      <div className="rounded-[28px] card-soft bg-card p-8">
         <h1 className="font-display text-2xl">Log in required</h1>
         <p className="mt-2 text-sm text-muted">
           Please log in to manage settings.
@@ -283,7 +283,7 @@ export default function SettingsPage() {
 
   return (
     <div className="mx-auto grid max-w-3xl gap-6">
-      <div className="rounded-[28px] card-soft bg-white p-6 sm:p-8">
+      <div className="rounded-[28px] card-soft bg-card p-6 sm:p-8">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="font-display text-3xl">Settings</h1>
@@ -298,7 +298,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="rounded-[28px] card-soft bg-white p-6 sm:p-8">
+      <div className="rounded-[28px] card-soft bg-card p-6 sm:p-8">
         <h2 className="font-display text-xl">Profile details</h2>
         <p className="mt-2 text-sm text-muted">
           Update the details shown on your profile.
@@ -450,27 +450,27 @@ export default function SettingsPage() {
             />
           </label>
           {profileMessage ? (
-            <p className="rounded-2xl border border-line bg-[#f6fff1] px-4 py-3 text-sm text-[#1c5924] md:col-span-2">
+            <p className="rounded-2xl border border-line bg-[var(--success-soft)] px-4 py-3 text-sm text-[var(--success)] md:col-span-2">
               {profileMessage}
             </p>
           ) : null}
           <button
             type="submit"
             disabled={savingProfile}
-            className="rounded-2xl bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-[#08150e] disabled:cursor-not-allowed disabled:opacity-70 md:col-span-2"
+            className="rounded-2xl bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-[var(--ink-hover)] disabled:cursor-not-allowed disabled:opacity-70 md:col-span-2"
           >
             {savingProfile ? "Saving..." : "Save profile"}
           </button>
         </form>
       </div>
 
-      <div className="rounded-[28px] card-soft bg-white p-6 sm:p-8">
+      <div className="rounded-[28px] card-soft bg-card p-6 sm:p-8">
         <h2 className="font-display text-xl">Profile photo</h2>
         <p className="mt-2 text-sm text-muted">
           Upload a clear headshot. PNG or JPG.
         </p>
-        <div className="mt-6 flex flex-wrap items-center gap-4 rounded-2xl border border-line bg-[#eef3f0] p-4">
-          <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-[#e3ece6] text-lg font-semibold text-muted">
+        <div className="mt-6 flex flex-wrap items-center gap-4 rounded-2xl border border-line bg-[var(--surface-soft)] p-4">
+          <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-[var(--surface-soft-focus)] text-lg font-semibold text-muted">
             {profile.photo_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -482,7 +482,7 @@ export default function SettingsPage() {
               getInitials(profile.full_name)
             )}
           </div>
-          <label className="cursor-pointer rounded-full border border-line bg-white px-4 py-2 text-xs font-semibold transition hover:border-foreground">
+          <label className="cursor-pointer rounded-full border border-line bg-card px-4 py-2 text-xs font-semibold transition hover:border-foreground">
             {savingPhoto ? "Uploading..." : "Upload photo"}
             <input
               type="file"
@@ -494,13 +494,13 @@ export default function SettingsPage() {
           </label>
         </div>
         {photoMessage ? (
-          <p className="mt-4 rounded-2xl border border-line bg-[#f6fff1] px-4 py-3 text-sm text-[#1c5924]">
+          <p className="mt-4 rounded-2xl border border-line bg-[var(--success-soft)] px-4 py-3 text-sm text-[var(--success)]">
             {photoMessage}
           </p>
         ) : null}
       </div>
 
-      <div className="rounded-[28px] card-soft bg-white p-6 sm:p-8">
+      <div className="rounded-[28px] card-soft bg-card p-6 sm:p-8">
         <h2 className="font-display text-xl">Social links</h2>
         <p className="mt-2 text-sm text-muted">
           Add your Instagram and TikTok URLs for your profile card.
@@ -537,27 +537,29 @@ export default function SettingsPage() {
             />
           </label>
           {socialMessage ? (
-            <p className="rounded-2xl border border-line bg-[#f6fff1] px-4 py-3 text-sm text-[#1c5924]">
+            <p className="rounded-2xl border border-line bg-[var(--success-soft)] px-4 py-3 text-sm text-[var(--success)]">
               {socialMessage}
             </p>
           ) : null}
           <button
             type="submit"
             disabled={savingSocials}
-            className="rounded-2xl bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-[#08150e] disabled:cursor-not-allowed disabled:opacity-70"
+            className="rounded-2xl bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-[var(--ink-hover)] disabled:cursor-not-allowed disabled:opacity-70"
           >
             {savingSocials ? "Saving..." : "Save social links"}
           </button>
         </form>
       </div>
 
-      <div className="rounded-[28px] card-soft bg-white p-8">
+      <div className="rounded-[28px] card-soft bg-card p-8">
         <h2 className="font-display text-xl">Password</h2>
         <form onSubmit={handlePasswordUpdate} className="mt-6 space-y-4">
           <label className="block text-sm font-medium">
             New password
             <div className="mt-2">
               <PasswordInput
+                name="new-password"
+                autoComplete="new-password"
                 required
                 value={password}
                 onChange={setPassword}
@@ -566,21 +568,21 @@ export default function SettingsPage() {
             </div>
           </label>
           {passwordMessage ? (
-            <p className="rounded-2xl border border-line bg-[#f6fff1] px-4 py-3 text-sm text-[#1c5924]">
+            <p className="rounded-2xl border border-line bg-[var(--success-soft)] px-4 py-3 text-sm text-[var(--success)]">
               {passwordMessage}
             </p>
           ) : null}
           <button
             type="submit"
             disabled={savingPassword}
-            className="rounded-2xl bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-[#08150e] disabled:cursor-not-allowed disabled:opacity-70"
+            className="rounded-2xl bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-[var(--ink-hover)] disabled:cursor-not-allowed disabled:opacity-70"
           >
             {savingPassword ? "Updating..." : "Update password"}
           </button>
         </form>
       </div>
 
-      <div className="rounded-[28px] card-soft bg-white p-8">
+      <div className="rounded-[28px] card-soft bg-card p-8">
         <h2 className="font-display text-xl">Account</h2>
         <p className="mt-2 text-sm text-muted">
           {userEmail ? `Signed in as ${userEmail}` : "Signed in"}
@@ -588,11 +590,20 @@ export default function SettingsPage() {
         <button
           type="button"
           onClick={handleSignOut}
-          className="mt-6 flex items-center gap-2 rounded-2xl border border-line px-4 py-3 text-sm font-semibold text-[#8f2b18] transition hover:border-[#8f2b18]"
+          className="mt-6 flex items-center gap-2 rounded-2xl border border-line px-4 py-3 text-sm font-semibold text-[var(--danger)] transition hover:border-[var(--danger)]"
         >
           <LogOut className="h-4 w-4" />
           Sign out
         </button>
+        <p className="mt-6 text-xs text-muted">
+          <Link className="font-semibold text-foreground" href="/privacy">
+            Privacy Policy
+          </Link>{" "}
+          ·{" "}
+          <Link className="font-semibold text-foreground" href="/terms">
+            Terms of Service
+          </Link>
+        </p>
       </div>
     </div>
   );

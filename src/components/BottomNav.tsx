@@ -16,7 +16,7 @@ import {
 import { supabase } from "@/lib/supabase/client";
 
 const primaryTabs = [
-  { href: "/profile", label: "Profile", icon: User },
+  { href: "/profile", label: "Dashboard", icon: User },
   { href: "/attendance", label: "Attendance", icon: ClipboardCheck },
   { href: "/schedule", label: "Schedule", icon: CalendarDays },
   { href: "/documents", label: "Documents", icon: FileText },
@@ -69,7 +69,7 @@ export default function BottomNav() {
       ) : null}
 
       {moreOpen ? (
-        <div className="fixed inset-x-3 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-50 rounded-[24px] border border-line bg-white p-3 shadow-[0_20px_50px_-25px_rgba(11,27,43,0.5)] md:hidden">
+        <div className="fixed inset-x-3 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-50 rounded-[24px] border border-line bg-card p-3 shadow-[0_20px_50px_-25px_rgba(11,27,43,0.5)] md:hidden">
           <div className="grid gap-1">
             {moreLinks.map((item) => {
               const Icon = item.icon;
@@ -78,7 +78,7 @@ export default function BottomNav() {
                   key={item.href}
                   href={item.href}
                   onClick={() => setMoreOpen(false)}
-                  className="flex min-h-[44px] items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold text-foreground transition hover:bg-[#eef3f0]"
+                  className="flex min-h-[44px] items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold text-foreground transition hover:bg-[var(--surface-soft)]"
                 >
                   <Icon className="h-5 w-5 text-muted" />
                   {item.label}
@@ -89,7 +89,7 @@ export default function BottomNav() {
               <Link
                 href="/admin"
                 onClick={() => setMoreOpen(false)}
-                className="flex min-h-[44px] items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold text-foreground transition hover:bg-[#eef3f0]"
+                className="flex min-h-[44px] items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold text-foreground transition hover:bg-[var(--surface-soft)]"
               >
                 <ShieldCheck className="h-5 w-5 text-muted" />
                 Admin
@@ -99,7 +99,7 @@ export default function BottomNav() {
         </div>
       ) : null}
 
-      <nav className="safe-bottom fixed inset-x-0 bottom-0 z-40 border-t border-line bg-white/95 backdrop-blur md:hidden">
+      <nav className="safe-bottom fixed inset-x-0 bottom-0 z-40 border-t border-line bg-card/95 backdrop-blur md:hidden">
         <div className="mx-auto flex max-w-6xl items-stretch justify-around px-1">
           {primaryTabs.map((item) => {
             const Icon = item.icon;
