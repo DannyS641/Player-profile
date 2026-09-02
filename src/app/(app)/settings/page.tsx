@@ -163,9 +163,15 @@ export default function SettingsPage() {
       .from("avatars")
       .getPublicUrl(filePath);
 
+    // The file path is stable across re-uploads (same user, same extension),
+    // so the public URL never changes on its own — without a cache-busting
+    // suffix, neither React nor the browser's HTTP cache would ever notice
+    // the image actually changed.
+    const photoUrl = `${publicData.publicUrl}?v=${Date.now()}`;
+
     const { error: updateError } = await supabase
       .from("profiles")
-      .update({ photo_url: publicData.publicUrl })
+      .update({ photo_url: photoUrl })
       .eq("id", userId);
 
     if (updateError) {
@@ -176,7 +182,7 @@ export default function SettingsPage() {
 
     setProfile((current) => ({
       ...current,
-      photo_url: publicData.publicUrl,
+      photo_url: photoUrl,
     }));
     setPhotoMessage("Profile photo updated.");
     setSavingPhoto(false);
