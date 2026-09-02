@@ -734,10 +734,10 @@ export default function AdminPage() {
     setSchedule((current) => current.filter((item) => item.id !== id));
   };
 
-  const handleDocDownload = async (path: string) => {
+  const handleDocDownload = async (path: string, name: string) => {
     const { data, error } = await supabase.storage
       .from("documents")
-      .createSignedUrl(path, 3600);
+      .createSignedUrl(path, 3600, { download: friendlyName(name) });
     if (error || !data?.signedUrl) {
       setMessage(error?.message ?? "Could not generate download link.");
       return;
@@ -745,10 +745,10 @@ export default function AdminPage() {
     openInNewTab(data.signedUrl);
   };
 
-  const handleEssayDownload = async (path: string) => {
+  const handleEssayDownload = async (path: string, name: string) => {
     const { data, error } = await supabase.storage
       .from("education")
-      .createSignedUrl(path, 3600);
+      .createSignedUrl(path, 3600, { download: friendlyName(name) });
     if (error || !data?.signedUrl) {
       setMessage(error?.message ?? "Could not generate download link.");
       return;
@@ -2251,7 +2251,9 @@ export default function AdminPage() {
                                 <div className="flex items-center gap-2">
                                   <button
                                     type="button"
-                                    onClick={() => handleDocDownload(file.path)}
+                                    onClick={() =>
+                                      handleDocDownload(file.path, file.name)
+                                    }
                                     className="rounded-full border border-line px-3 py-1 text-xs font-semibold transition hover:border-foreground"
                                   >
                                     Download
@@ -2291,7 +2293,9 @@ export default function AdminPage() {
                                 <div className="flex items-center gap-2">
                                   <button
                                     type="button"
-                                    onClick={() => handleEssayDownload(file.path)}
+                                    onClick={() =>
+                                      handleEssayDownload(file.path, file.name)
+                                    }
                                     className="rounded-full border border-line px-3 py-1 text-xs font-semibold transition hover:border-foreground"
                                   >
                                     Download

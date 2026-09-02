@@ -104,10 +104,10 @@ export default function DocumentsPage() {
     setUploading(false);
   };
 
-  const handleDownload = async (path: string) => {
+  const handleDownload = async (file: UploadItem) => {
     const { data, error } = await supabase.storage
       .from("documents")
-      .createSignedUrl(path, 3600);
+      .createSignedUrl(file.path, 3600, { download: friendlyName(file.name) });
     if (error || !data?.signedUrl) {
       setMessage(error?.message ?? "Could not generate download link.");
       return;
@@ -194,7 +194,7 @@ export default function DocumentsPage() {
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => handleDownload(file.path)}
+                    onClick={() => handleDownload(file)}
                     className="rounded-full border border-line px-3 py-1 text-xs font-semibold transition hover:border-foreground"
                   >
                     Download
